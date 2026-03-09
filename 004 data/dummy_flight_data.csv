@@ -1,0 +1,11 @@
+flight_id,arrival_time,passengers,is_schengen,turnaround_time_min,requires_heavy_gate
+SK123,08:00,150,True,30,False
+DY456,08:05,180,True,35,False
+WF789,08:10,39,True,20,False
+KL111,08:15,160,False,45,False
+LH222,08:20,170,False,45,False
+SK333,08:25,145,True,30,False
+DY777,08:30,185,True,35,False
+BA444,08:35,155,False,50,False
+SK999,08:40,140,True,30,False
+WF555,08:45,45,True,20,False
