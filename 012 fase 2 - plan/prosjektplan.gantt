@@ -1,0 +1,24 @@
+gantt
+    title Prosjektfremdrift: Kapasitetsanalyse Flesland (LOG650)
+    dateFormat  YYYY-MM-DD
+    section Planlegging
+    Prosjektoppstart & Plan :active, p1, 2026-02-15, 2026-03-09
+    Milepæl M1: Godkjent beskrivelse :milestone, m1, 2026-03-09, 0d
+
+    section Datainnsamling
+    Innhenting av trafikkdata (Avinor) :p2, 2026-03-09, 2026-03-31
+    Strukturering av datagrunnlag :p3, 2026-03-20, 2026-04-05
+    Milepæl M2: Datagrunnlag etablert :milestone, m2, 2026-03-31, 0d
+
+    section Utvikling
+    Konseptuell modellering :p4, 2026-04-01, 2026-04-30
+    Milepæl M3: Konseptuell modell ferdig :milestone, m3, 2026-04-30, 0d
+    Programmering (Python/SimPy) :p5, 2026-05-01, 2026-05-15
+    Milepæl M4: Simuleringsmodell ferdig :milestone, m4, 2026-05-15, 0d
+
+    section Analyse & Rapport
+    Baseline-analyse & Testing :p6, 2026-05-16, 2026-05-22
+    Scenarioanalyse :p7, 2026-05-20, 2026-05-26
+    Sluttføring av rapport :p8, 2026-05-20, 2026-05-31
+    Innlevering :crit, p9, 2026-06-01, 1d
+    Milepæl M5: Endelig innlevering :milestone, m5, 2026-06-01, 0d
