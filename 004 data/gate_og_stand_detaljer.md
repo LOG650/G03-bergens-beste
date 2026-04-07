@@ -41,10 +41,10 @@ Dette dokumentet fungerer som grunnlag for ressursallokering i simuleringsmodell
 | 1 | Remote | **Defekt.** Brukes ikke i normaldrift. |
 | 2 | Remote | **Defekt.** Brukes ikke i normaldrift. |
 | 3 | Remote | **Aktiv.** Vanlig remote stand for passasjerfly. |
-| 4 | Remote | Aktiv. |
-| 5 | Remote | Aktiv. |
-| 6 | Remote | Aktiv. |
-| 7 | Remote | Aktiv. |
+| 4 | Remote | **Aktiv.** Brukes til rute- og passasjerfly (opptil 186 pax/B737). |
+| 5 | Remote | **Aktiv.** Brukes til rute- og passasjerfly (opptil 186 pax/B737). |
+| 6 | Remote | **Aktiv.** Brukes til rute- og passasjerfly (registrert i busslogg). |
+| 7 | Remote | **Aktiv.** Brukes til rute- og passasjerfly (registrert i busslogg). |
 | 8 | Remote | **Frakt / Crew.** Reservert DHL/Frakt-operasjoner. |
 | 9 | Remote | Kan brukes samtidig med 11 (hvis 10 er ledig). |
 | 10 | Remote | Kan bare brukes hvis 9 og 11 er ledige (overlapp). |
@@ -54,20 +54,20 @@ Dette dokumentet fungerer som grunnlag for ressursallokering i simuleringsmodell
 *   **Remote Nord (9-10-11):** Stand 10 er en "sentrert" plass som fysisk blokkerer naboene 9 og 11. Modellen må velge mellom konfigurasjon (9+11) ELLER (10).
 *   **Operativ prioritering:** Stand 1, 2 og 3 skal i utgangspunktet ikke telles som tilgjengelig kapasitet i normaldrift pga. tekniske/operative hindringer.
 
-## 4. Remote Stands - Øst (Terminal 1 / Helikopter / Frakt)
-| Stand | Type | Sone | Maks Flystørrelse | Restriksjoner / Kommentarer |
-|:---|:---|:---|:---|:---|
-| 41 | Remote | | | |
-| 43 | Remote | | | |
-| 46 | Remote | | | |
-| 47 | Remote | | | |
-| 48 | Remote | | | |
+## 4. Remote Stands - Øst
+| Stand | Type | Bruk / Restriksjoner |
+|:---|:---|:---|
+| 41 | Remote | **Aktiv.** Brukes til rute- og passasjerfly (mye Widerøe). |
+| 43 | Remote | **Aktiv.** Brukes til rute- og passasjerfly (mye Widerøe). |
+| 46 | Remote | Spesialoppdrag / Ambulanse / Ikke-sikkerhetsklarert. |
+| 47 | Remote | Spesialoppdrag / Ambulanse / Ikke-sikkerhetsklarert. |
+| 48 | Remote | Spesialoppdrag / Ambulanse / Ikke-sikkerhetsklarert. |
 
 ## 5. Remote Stands - Sør (Ved hangarer)
-| Stand | Type | Sone | Maks Flystørrelse | Restriksjoner / Kommentarer |
-|:---|:---|:---|:---|:---|
-| 61-69 | Remote | | | |
-| DP 1-4 | De-ice | | | Oppstillingsplasser ved avisingsplattform |
+| Stand | Type | Bruk / Restriksjoner |
+|:---|:---|:---|
+| 61-69 | Remote | Spesial / Langtidsparkering / Hangarbesøk. Ikke i bruk for pax. |
+| DP 1-4 | De-ice | Oppstillingsplasser ved avisingsplattform. |
 
 ## 6. Spesialområder
 | Område | Beskrivelse |
