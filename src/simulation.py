@@ -68,18 +68,24 @@ import os
 def start_simulering():
     # Finn stien til denne filen og gå opp ett nivå til prosjektmappen
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(script_dir, "..", "004 data", "dummy_flight_data.csv")
+    data_path = os.path.join(script_dir, "..", "004 data", "Flyprogram 15jun - 29jun CSV.csv")
 
     # Last inn data
     try:
-        df = pd.read_csv(data_path)
+        # Faktisk data bruker ';' som separator
+        df = pd.read_csv(data_path, sep=';')
+        # Filtrer kun ankomster for denne simuleringen (Arrival/Departure kolonnen)
+        df = df[df['Arrival/Departure'] == 'Arrival']
     except FileNotFoundError:
         print(f"Fant ikke datafilen på: {data_path}")
         return
+    except KeyError as e:
+        print(f"Mangler kolonne i datafilen: {e}")
+        return
 
-    # Konverter tidspunkt '08:00' til minutter fra start (f.eks. start kl 08:00 = 0)
-    # For enkelhets skyld sier vi at simuleringen starter 08:00.
-    start_time_str = "08:00"
+    # Konverter tidspunkt til minutter fra start
+    # Bruker første flys tid som base hvis ikke spesifisert
+    start_time_str = df['Scheduled Time'].iloc[0]
     base_time = pd.to_datetime(start_time_str, format='%H:%M')
 
     env = simpy.Environment()
@@ -90,12 +96,23 @@ def start_simulering():
 
     # Planlegg alle flyene
     for index, row in df.iterrows():
-        flight_time = pd.to_datetime(row['arrival_time'], format='%H:%M')
-        delay_minutes = (flight_time - base_time).total_seconds() / 60
-        
-        if delay_minutes < 0: continue # Hopp over fly før starttid
-        
-        env.process(delayed_start(env, delay_minutes, row, flyplass))
+        try:
+            flight_time = pd.to_datetime(row['Scheduled Time'], format='%H:%M')
+            delay_minutes = (flight_time - base_time).total_seconds() / 60
+            
+            if delay_minutes < 0: continue # Hopp over fly før starttid
+            
+            # Lager et fly_data objekt som ligner på det gamle, men fra nye kolonner
+            fly_data = {
+                'flight_id': row['Flight'],
+                'passengers': row['Seats'], # Bruker Seats som estimat for pax
+                'turnaround_time_min': 45   # Standard turnaround siden det mangler i data
+            }
+            
+            env.process(delayed_start(env, delay_minutes, fly_data, flyplass))
+        except Exception as e:
+            print(f"Feil ved prosessering av rad {index}: {e}")
+            continue
 
     env.run(until=SIMULERINGSTID)
     print("--- Simulering ferdig ---")
