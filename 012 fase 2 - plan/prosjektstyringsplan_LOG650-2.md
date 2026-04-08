@@ -95,25 +95,50 @@ Utvikle en analysemodell som kan estimere hvor mange samtidige ankomster Bergen 
 Prosjektet utvikler en **diskret hendelses-simuleringsmodell (DES)** i Python som inkluderer flyankomster, gateallokering, busstransport og turnaround-tider.
 
 ### Arbeidsnedbrytningsstruktur (WBS)
-1. **Prosjektoppstart:** Definere problemstilling og rammer.
-2. **Datainnsamling:** Strukturere trafikkdata fra Avinor.
-3. **Modellutvikling:** Utvikle konseptuell og teknisk simuleringsmodell.
-4. **Analyse:** Kjøre simuleringer og scenarioanalyser.
-5. **Rapportering:** Tolke resultater og skrive endelig rapport.
+- [x] **1. Prosjektoppstart:** Definere problemstilling og rammer.
+- [x] **2. Datainnsamling:** Strukturere trafikkdata fra Avinor.
+- [ ] **3. Modellutvikling:** Utvikle konseptuell og teknisk simuleringsmodell.
+- [ ] **4. Analyse:** Kjøre simuleringer og scenarioanalyser.
+- [ ] **5. Rapportering:** Tolke resultater og skrive endelig rapport.
 
 ---
 
 # 7. Fremdrift
 
-### Avhengighetsdiagram
-Datainnsamling -> Modellutvikling -> Scenarioanalyse -> Rapportskriving.
+### Gantt-diagram (Prosjektfremdrift)
+```mermaid
+gantt
+    title Prosjektfremdrift: Kapasitetsanalyse Flesland (LOG650)
+    dateFormat  YYYY-MM-DD
+    section Planlegging
+    Prosjektoppstart & Plan :done, p1, 2026-02-15, 2026-03-09
+    Milepæl M1: Godkjent beskrivelse :milestone, m1, 2026-03-09, 0d
+
+    section Datainnsamling
+    Innhenting av trafikkdata (Avinor) :done, p2, 2026-03-09, 2026-03-31
+    Strukturering av datagrunnlag :done, p3, 2026-03-20, 2026-04-07
+    Milepæl M2: Datagrunnlag etablert :milestone, m2, 2026-04-07, 0d
+
+    section Utvikling
+    Konseptuell modellering :active, p4, 2026-04-01, 2026-04-30
+    Milepæl M3: Konseptuell modell ferdig :milestone, m3, 2026-04-30, 0d
+    Programmering (Python/SimPy) :p5, 2026-05-01, 2026-05-15
+    Milepæl M4: Simuleringsmodell ferdig :milestone, m4, 2026-05-15, 0d
+
+    section Analyse & Rapport
+    Baseline-analyse & Testing :p6, 2026-05-16, 2026-05-22
+    Scenarioanalyse :p7, 2026-05-20, 2026-05-26
+    Sluttføring av rapport :p8, 2026-05-20, 2026-05-31
+    Innlevering :crit, p9, 2026-06-01, 1d
+    Milepæl M5: Endelig innlevering :milestone, m5, 2026-06-01, 0d
+```
 
 ### Milepæler
-- **M1:** Godkjent prosjektbeskrivelse (ferdigstilt).
-- **M2:** Datagrunnlag etablert (Mars).
-- **M3:** Konseptuell modell ferdig (April).
-- **M4:** Simuleringsmodell ferdig (Medio Mai).
-- **M5:** Endelig innlevering (1. juni).
+- [x] **M1:** Godkjent prosjektbeskrivelse (Ferdigstilt 09.03.26)
+- [x] **M2:** Datagrunnlag etablert (Ferdigstilt 07.04.26)
+- [ ] **M3:** Konseptuell modell ferdig (Planlagt April)
+- [ ] **M4:** Simuleringsmodell ferdig (Planlagt Medio Mai)
+- [ ] **M5:** Endelig innlevering (1. juni)
 
 ---
 
@@ -135,9 +160,9 @@ Risiko identifiseres løpende og dokumenteres i risikoregisteret.
 # 9. Saker
 | ID | Sak/Problemstilling | Status | Ansvarlig |
 |---|---|---|---|
-| S1 | Etablere stabil Python-omgivelse og installere SimPy | Åpen | Sandra |
-| S2 | Innhente og avklare format for flyprogrammer fra Avinor | Åpen | Sandra |
-| S3 | Kartlegge og lage oversikt over gater/remote stands (kompatibilitet og begrensninger) | Åpen | Sandra |
+| [ ] S1 | Etablere stabil Python-omgivelse og installere SimPy | Åpen | Sandra |
+| [x] S2 | Innhente og avklare format for flyprogrammer fra Avinor | Lukket | Sandra |
+| [x] S3 | Kartlegge og lage oversikt over gater/remote stands (kompatibilitet og begrensninger) | Lukket | Sandra |
 
 ---
 
