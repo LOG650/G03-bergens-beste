@@ -1,126 +1,169 @@
 import simpy
 import pandas as pd
-import random
+import numpy as np
+import os
 
-# Konfigurasjon (Disse tallene justerer du når du vet mer)
-ANTALL_GATER = 14          # Antall vanlige gater (med bro)
-ANTALL_REMOTE_STANDS = 5  # Antall remote stands
-ANTALL_BUSSER = 2         # Antall busser tilgjengelig
-BUSS_KAPASITET = 70       # Hvor mange passasjerer en buss tar
-BUSS_TUR_RETUR_TID = 10   # Minutter en buss bruker på å kjøre tur/retur terminal
+# --- KONFIGURASJON ---
+ANTALL_SJØFØRER = 2 
+BUSS_KAPASITET = 80
+KJØRETID = 6 
 
-SIMULERINGSTID = 60      # Vi simulerer 2 timer (i minutter)
+INNLAND_FASTE = [15, 16, 17, 18, 19, 20] 
+NON_SCHENGEN_BASE = [23]
+FLEX_NS_S = [24, 25, 26, 27]     
+FLEX_S_D = [28, 29, 30, 31, 32] 
+
+REMOTE_STANDS = [3, 4, 5, 6, 7, 41, 43, 9, 11]
 
 class Flyplass:
     def __init__(self, env):
         self.env = env
-        # Ressurser
-        self.gater = simpy.Resource(env, capacity=ANTALL_GATER)
-        self.remote_stands = simpy.Resource(env, capacity=ANTALL_REMOTE_STANDS)
-        self.busser = simpy.Resource(env, capacity=ANTALL_BUSSER)
+        self.busser = simpy.Resource(env, capacity=4)
+        self.sjåfører = simpy.Resource(env, capacity=ANTALL_SJØFØRER)
+        self.gate_status = {g: None for g in INNLAND_FASTE + NON_SCHENGEN_BASE + FLEX_NS_S + FLEX_S_D}
+        self.remote_status = {s: None for s in REMOTE_STANDS}
+        self.active_flight_zones = {}
+        self.stats = {
+            'gate_count': 0,
+            'remote_count': 0,
+            'wait_times': [],
+            'rejected': 0
+        }
+        self.gate_ledig_event = env.event()
+        self.aktive_buss_oppdrag = 0
 
-    def kjør_buss(self, fly_id, antall_passasjerer):
-        """Simulerer busstransport for et fly på remote stand"""
-        antall_turer = (antall_passasjerer + BUSS_KAPASITET - 1) // BUSS_KAPASITET
-        print(f"  {self.env.now}: 🚌 Fly {fly_id} trenger {antall_turer} bussturer for {antall_passasjerer} pax.")
+    def sjekk_sone_konflikt(self, gate, sone):
+        if gate in FLEX_NS_S:
+            for g in FLEX_NS_S:
+                if self.gate_status[g] is not None:
+                    if self.active_flight_zones.get(self.gate_status[g]) != sone:
+                        return False
+        return True
+
+    def finn_ledig_gate(self, sone):
+        rekkefølge = []
+        if sone == 'D': rekkefølge = INNLAND_FASTE + [32, 31, 30, 29, 28]
+        elif sone == 'S': rekkefølge = [28, 29, 30, 31, 32] + FLEX_NS_S
+        elif sone == 'I': rekkefølge = NON_SCHENGEN_BASE + FLEX_NS_S
+            
+        for g in rekkefølge:
+            if self.gate_status[g] is None and self.sjekk_sone_konflikt(g, sone):
+                if sone == 'D' and g not in (INNLAND_FASTE + FLEX_S_D): continue
+                if sone == 'S' and g not in (FLEX_NS_S + FLEX_S_D): continue
+                if sone == 'I' and g not in (NON_SCHENGEN_BASE + FLEX_NS_S): continue
+                return g
+        return None
+
+def busstransport(env, flyplass, fly_id, pax):
+    flyplass.aktive_buss_oppdrag += 1
+    turer = int(np.ceil(pax / BUSS_KAPASITET))
+    def tur():
+        with flyplass.busser.request() as rb, flyplass.sjåfører.request() as rs:
+            yield rb & rs
+            yield env.timeout(KJØRETID)
+    yield simpy.AllOf(env, [env.process(tur()) for _ in range(turer)])
+    flyplass.aktive_buss_oppdrag -= 1
+
+def fly_prosess(env, fly_data, flyplass, smp):
+    fly_id = fly_data['In_Flight'] if fly_data['In_Flight'] != 'NIGHTSTOP' else fly_data['Out_Flight']
+    sone = fly_data['D/I/S']
+    pax = fly_data['Seats'] if not np.isnan(fly_data['Seats']) else 150
+    ankomst_min = env.now
+    er_peak = (900 <= (smp + env.now) <= 1050)
+    er_lite_fly = (pax < 120)
+
+    # LOGIKK: Strategisk Remote i Peak
+    if er_lite_fly and er_peak:
+        if flyplass.aktive_buss_oppdrag < ANTALL_SJØFØRER:
+            remote = next((s for s, v in flyplass.remote_status.items() if v is None), None)
+            if remote:
+                flyplass.remote_status[remote] = fly_id
+                flyplass.stats['remote_count'] += 1
+                flyplass.stats['wait_times'].append(0) 
+                yield env.process(busstransport(env, flyplass, fly_id, pax))
+                yield env.timeout(max(0, fly_data['duration_min'] - 6))
+                flyplass.remote_status[remote] = None
+                if not flyplass.gate_ledig_event.triggered:
+                    flyplass.gate_ledig_event.succeed()
+                    flyplass.gate_ledig_event = flyplass.env.event()
+                return
+
+    # Vanlig gate-søk med ventetid
+    while True:
+        gate = flyplass.finn_ledig_gate(sone)
+        if gate:
+            wait_time = env.now - ankomst_min
+            flyplass.stats['wait_times'].append(wait_time)
+            flyplass.stats['gate_count'] += 1
+            yield env.process(parker(env, fly_id, gate, sone, fly_data, flyplass, smp, ankomst_min, pax))
+            return
         
-        for tur in range(antall_turer):
-            with self.busser.request() as request:
-                yield request # Vent på ledig buss
-                print(f"  {self.env.now}: 🚌 Buss starter tur {tur+1} for {fly_id}")
-                yield self.env.timeout(BUSS_TUR_RETUR_TID) # Kjøretid
-                print(f"  {self.env.now}: 🚌 Buss ferdig med tur {tur+1} for {fly_id}")
+        # Hvis vi har ventet 15 min, prøv remote uansett flystørrelse
+        if env.now - ankomst_min >= 15:
+            remote = next((s for s, v in flyplass.remote_status.items() if v is None), None)
+            if remote:
+                wait_time = env.now - ankomst_min
+                flyplass.stats['wait_times'].append(wait_time)
+                flyplass.stats['remote_count'] += 1
+                flyplass.remote_status[remote] = fly_id
+                yield env.process(busstransport(env, flyplass, fly_id, pax))
+                yield env.timeout(max(0, fly_data['duration_min'] - 6))
+                flyplass.remote_status[remote] = None
+                if not flyplass.gate_ledig_event.triggered:
+                    flyplass.gate_ledig_event.succeed()
+                    flyplass.gate_ledig_event = flyplass.env.event()
+                return
 
-def fly_prosess(env, fly_data, flyplass):
-    """Selve livssyklusen til et fly i systemet"""
-    fly_id = fly_data['flight_id']
-    print(f"{env.now}: ✈️  Fly {fly_id} har landet.")
+        yield flyplass.gate_ledig_event | env.timeout(1)
 
-    # 1. Prøv å få gate først (Prioritert)
-    # Her kan du legge inn logikk: "Hvis Schengen, prøv Schengen-gate først"
-    # For nå gjør vi det enkelt: Prøv gate, hvis full -> remote stand.
-    
-    if flyplass.gater.count < flyplass.gater.capacity:
-        with flyplass.gater.request() as gate_request:
-            yield gate_request
-            print(f"{env.now}: 🟢 Fly {fly_id} parkerte ved GATE.")
-            yield env.timeout(fly_data['turnaround_time_min'])
-            print(f"{env.now}: 🛫 Fly {fly_id} drar fra gate.")
-            
-    else:
-        # 2. Hvis ingen gate, bruk remote stand
-        print(f"{env.now}: ⚠️  Ingen gate ledig for {fly_id}, prøver REMOTE stand.")
-        
-        with flyplass.remote_stands.request() as remote_request:
-            yield remote_request
-            print(f"{env.now}: 🟡 Fly {fly_id} parkerte ved REMOTE stand.")
-            
-            # Start bussprosess parallelt med turnaround
-            # (I virkeligheten venter man kanskje litt før bussene kommer, men vi kjører det nå)
-            yield env.process(flyplass.kjør_buss(fly_id, fly_data['passengers']))
-            
-            # Vi antar flyet må stå der minst like lenge som turnaround-tiden
-            yield env.timeout(fly_data['turnaround_time_min'])
-            print(f"{env.now}: 🛫 Fly {fly_id} drar fra remote stand.")
-
-import os
+def parker(env, fly_id, gate, sone, fly_data, flyplass, smp, ankomst_min, pax):
+    flyplass.gate_status[gate] = fly_id
+    flyplass.active_flight_zones[fly_id] = sone
+    yield env.timeout(fly_data['duration_min'])
+    flyplass.gate_status[gate] = None
+    if fly_id in flyplass.active_flight_zones: del flyplass.active_flight_zones[fly_id]
+    if not flyplass.gate_ledig_event.triggered:
+        flyplass.gate_ledig_event.succeed()
+        flyplass.gate_ledig_event = flyplass.env.event()
 
 def start_simulering():
-    # Finn stien til denne filen og gå opp ett nivå til prosjektmappen
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(script_dir, "..", "004 data", "Flyprogram 15jun - 29jun CSV.csv")
-
-    # Last inn data
-    try:
-        # Faktisk data bruker ';' som separator
-        df = pd.read_csv(data_path, sep=';')
-        # Filtrer kun ankomster for denne simuleringen (Arrival/Departure kolonnen)
-        df = df[df['Arrival/Departure'] == 'Arrival']
-    except FileNotFoundError:
-        print(f"Fant ikke datafilen på: {data_path}")
-        return
-    except KeyError as e:
-        print(f"Mangler kolonne i datafilen: {e}")
-        return
-
-    # Konverter tidspunkt til minutter fra start
-    # Bruker første flys tid som base hvis ikke spesifisert
-    start_time_str = df['Scheduled Time'].iloc[0]
-    base_time = pd.to_datetime(start_time_str, format='%H:%M')
-
+    df = pd.read_csv("G03-bergens-beste/004 data/simulation_input.csv")
+    df = df[df['Date'] == "2026-06-17"].copy()
+    def parse_t(s):
+        if not isinstance(s, str) or ':' not in s: return 0
+        h, m = map(int, s.split(':'))
+        return h * 60 + m
+    df['In_Min'] = df['In_Time'].apply(parse_t)
+    df = df.sort_values(by=['In_Min', 'Seats'], ascending=[True, False])
+    
     env = simpy.Environment()
     flyplass = Flyplass(env)
+    smp = df['In_Min'].min()
+    
+    for _, row in df.iterrows():
+        env.process(delayed_start(env, max(0, row['In_Min'] - smp), row, flyplass, smp))
+    
+    env.run(until=1440)
+    
+    # Rapport
+    print(f"\n--- SIMULERINGSRESULTATER ---")
+    print(f"Strategi: Små fly (<120) til remote i peak (15:00-17:30)")
+    print(f"Totalt antall fly håndtert: {len(flyplass.stats['wait_times'])}")
+    print(f"Fly til Gate: {flyplass.stats['gate_count']}")
+    print(f"Fly til Remote: {flyplass.stats['remote_count']}")
+    
+    if flyplass.stats['wait_times']:
+        avg_wait = sum(flyplass.stats['wait_times']) / len(flyplass.stats['wait_times'])
+        max_wait = max(flyplass.stats['wait_times'])
+        print(f"Gjennomsnittlig ventetid: {avg_wait:.1f} min")
+        print(f"Maksimal ventetid: {max_wait} min")
+    
+    print(f"Antall fly som ikke fikk plass: {flyplass.stats['rejected']}")
+    print(f"-----------------------------\n")
 
-    print(f"--- Starter simulering (Starttid: {start_time_str}) ---")
-    print(f"Ressurser: {ANTALL_GATER} gater, {ANTALL_REMOTE_STANDS} remote stands, {ANTALL_BUSSER} busser.")
-
-    # Planlegg alle flyene
-    for index, row in df.iterrows():
-        try:
-            flight_time = pd.to_datetime(row['Scheduled Time'], format='%H:%M')
-            delay_minutes = (flight_time - base_time).total_seconds() / 60
-            
-            if delay_minutes < 0: continue # Hopp over fly før starttid
-            
-            # Lager et fly_data objekt som ligner på det gamle, men fra nye kolonner
-            fly_data = {
-                'flight_id': row['Flight'],
-                'passengers': row['Seats'], # Bruker Seats som estimat for pax
-                'turnaround_time_min': 45   # Standard turnaround siden det mangler i data
-            }
-            
-            env.process(delayed_start(env, delay_minutes, fly_data, flyplass))
-        except Exception as e:
-            print(f"Feil ved prosessering av rad {index}: {e}")
-            continue
-
-    env.run(until=SIMULERINGSTID)
-    print("--- Simulering ferdig ---")
-
-def delayed_start(env, delay, fly_data, flyplass):
-    """Hjelpefunksjon for å starte flyet på riktig tidspunkt"""
+def delayed_start(env, delay, row, flyplass, smp):
     yield env.timeout(delay)
-    env.process(fly_prosess(env, fly_data, flyplass))
+    yield env.process(fly_prosess(env, row, flyplass, smp))
 
 if __name__ == "__main__":
     start_simulering()
