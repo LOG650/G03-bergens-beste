@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 # --- KONFIGURASJON ---
-ANTALL_SJØFØRER = 2 
+ANTALL_SJÅFØRER = 2 
 BUSS_KAPASITET = 80
 KJØRETID = 6 
 
@@ -19,7 +19,7 @@ class Flyplass:
     def __init__(self, env):
         self.env = env
         self.busser = simpy.Resource(env, capacity=4)
-        self.sjåfører = simpy.Resource(env, capacity=ANTALL_SJØFØRER)
+        self.sjåfører = simpy.Resource(env, capacity=ANTALL_SJÅFØRER)
         self.gate_status = {g: None for g in INNLAND_FASTE + NON_SCHENGEN_BASE + FLEX_NS_S + FLEX_S_D}
         self.remote_status = {s: None for s in REMOTE_STANDS}
         self.active_flight_zones = {}
@@ -74,7 +74,7 @@ def fly_prosess(env, fly_data, flyplass, smp):
 
     # LOGIKK: Strategisk Remote i Peak
     if er_lite_fly and er_peak:
-        if flyplass.aktive_buss_oppdrag < ANTALL_SJØFØRER:
+        if flyplass.aktive_buss_oppdrag < ANTALL_SJÅFØRER:
             remote = next((s for s, v in flyplass.remote_status.items() if v is None), None)
             if remote:
                 flyplass.remote_status[remote] = fly_id
