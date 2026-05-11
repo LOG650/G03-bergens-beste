@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>hovedrapport</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="/Users/sandrachristensen/LOG650/G03-bergens-beste/014 fase 4 - report/pdf-style.css" />
+</head>
+<body>
+<h1
+id="optimalisering-av-bakkestøtte-ressurser-ved-bergen-lufthavn-flesland">Optimalisering
+av bakkestøtte-ressurser ved Bergen Lufthavn Flesland</h1>
+<h2
+id="en-kvantitativ-simuleringsstudie-av-gate-utnyttelse-og-busstransport">En
+kvantitativ simuleringsstudie av gate-utnyttelse og busstransport</h2>
+<p><strong>Gruppe:</strong> G03 - Bergens Beste<br />
+<strong>Emne:</strong> LOG650 - Bacheloroppgave i Logistikk<br />
+<strong>Dato:</strong> 30. april 2026</p>
+<hr />
+<h2 id="sammendrag">Sammendrag</h2>
+<p>Denne rapporten undersøker kapasitetsutnyttelsen av gater og behovet
+for busstransport ved Bergen Lufthavn Flesland gjennom diskret-hendelse
+simulering (DES) i Python med SimPy. Problemstillingen fokuserer på
+balansen mellom maksimal utnyttelse av terminalnære gater og effektiv
+bruk av fjernparkering (remote stands) i peak-perioder. Ved å analysere
+et planlagt flyprogram for en travel sommerdag i 2026, indikerer studien
+at dagens operasjonsmodell med aktiv gate-styring og to tilgjengelige
+busssjåfører i rushtiden er robust. Resultatene viser en gjennomsnittlig
+ventetid på under ett minutt, selv ved høy trafikkbelastning.
+Scenarioanalyser viser imidlertid at systemet er sårbart ved
+bemanningsreduksjon til én sjåfør, da dette fjerner den operative
+bufferen som trengs for å håndtere uforutsette avvik. Videre indikerer
+simuleringen at lufthavnen har kapasitet til å håndtere en trafikkvekst
+på inntil 20 % i rushtiden uten vesentlig økning i ventetid, forutsatt
+at dagens ressursallokering opprettholdes. Rapporten konkluderer med at
+strategisk bruk av fjernparkering for mindre flymaskiner er en kritisk
+suksessfaktor for effektiv drift ved Flesland.</p>
+<hr />
+<h2 id="1-innledning">1. Innledning</h2>
+<h3 id="11-bakgrunn">1.1 Bakgrunn</h3>
+<p>Bergen Lufthavn Flesland er Norges nest største flyplass og fungerer
+som et kritisk knutepunkt for både nasjonal og internasjonal luftfart på
+Vestlandet. Med en betydelig økning i passasjertall og antall
+flybevegelser de siste årene, har presset på lufthavnens infrastruktur
+økt betraktelig. Spesielt i de daglige rushtidene (peak-perioder), hvor
+mange flyvninger ankommer og har avgang samtidig, oppstår det
+utfordringer knyttet til kapasitetsutnyttelse av gatene ved
+terminalen.</p>
+<p>Når alle gatene ved terminalbygget er opptatt, må ankommende fly
+henvises til fjernparkering (remote stands). Dette krever bruk av
+busstransport for å frakte passasjerer mellom flyet og terminalen, noe
+som involverer ekstra ressurser i form av busser og sjåfører, og som
+potensielt kan føre til forsinkelser for flyselskapene og redusert
+komfort for passasjerene. Samtidig er det kostbart for lufthavnen å
+opprettholde en stor flåte av busser og personell som kun trengs i korte
+perioder av døgnet.</p>
+<p>Denne studien tar for seg balansegangen mellom maksimal
+gate-utnyttelse og effektiv bruk av fjernparkering. Ved å bruke
+simulering som verktøy, kan vi undersøke hvordan ulike strategier for
+parkering og ressursallokering påvirker passasjerflyten og ventetider
+ved lufthavnen.</p>
+<h3 id="12-problemstilling">1.2 Problemstilling</h3>
+<p>Hvilken effekt har endringer i flyprogram eller ressursallokering
+(busser/gater) på gateutnyttelse, bruk av fjernparkering og
+ventetider?</p>
+<h3 id="13-forskningsspørsmål">1.3 Forskningsspørsmål</h3>
+<p>Studien tar sikte på å besvare følgende spørsmål gjennom
+simulering:</p>
+<ol type="1">
+<li>I hvilken grad bidrar dagens praksis med strategisk fjernparkering
+av mindre fly til å redusere gate-konflikter og ventetider i
+peak-perioder?</li>
+<li>Hva er den kritiske grensen for antall busssjåfører før ventetiden
+for passasjerer øker markant i rushtiden?</li>
+<li>Hvordan vil dagens operasjonsmodell og ressursallokering håndtere en
+potensiell fremtidig økning i antall flybevegelser?</li>
+</ol>
+<h3 id="14-avgrensning">1.4 Avgrensning</h3>
+<p>For å sikre en fokusert analyse av gate- og busskapasitet, er
+følgende faktorer holdt utenfor studiens omfang:</p>
+<ul>
+<li><strong>Bagasjehåndtering:</strong> Studien ser kun på flyets
+bevegelse og passasjertransport mellom fly og terminal. Flaskehalser i
+bagasjesystemet eller tilgang på bagasjevogner er ikke modellert.</li>
+<li><strong>Teknisk pålitelighet og vedlikehold:</strong> Modellen
+forutsetter 100 % oppetid på fysisk infrastruktur (broer, busser) og ser
+bort fra uforutsette tekniske feil eller vedlikeholdsstans i
+simuleringsperioden.</li>
+<li><strong>Fysisk trafikkavvikling på taksebaner:</strong> Kjøretider
+for busser er basert på historiske gjennomsnittstall og inkluderer ikke
+sanntidsinteraksjon med flytrafikk eller andre kjøretøy på
+flyplassområdet som kan skape lokale forsinkelser.</li>
+<li><strong>Ground Handling (Bakketjenester):</strong> Det forutsettes
+at eksterne tjenester som catering, fylling av drivstoff og teknisk
+vedlikehold utføres innenfor flyets planlagte turnaround-tid. Tilgang på
+personell fra handling-agenter (f.eks. Widerøe Ground Handling eller
+Aviator) er antatt å være ubegrenset.</li>
+<li><strong>Værforhold:</strong> Simuleringen tar utgangspunkt i normale
+operative forhold (sommerprogram). Ekstremvær som krever avising
+(de-icing) eller snørydding, som ville endret både turnaround-tider og
+banekapasitet, er ikke inkludert.</li>
+<li><strong>Sikkerhetskontroll og landside-kapasitet:</strong> Studien
+fokuserer på "airside"-operasjoner. Kapasitetsutfordringer i terminalens
+avgangshall, sikkerhetskontroll eller passkontroll er ikke en del av
+modellen.</li>
+</ul>
+<h2 id="2-teoretisk-rammeverk">2. Teoretisk Rammeverk</h2>
+<h3 id="21-køteori-queueing-theory">2.1 Køteori (Queueing Theory)</h3>
+<p>Køteori er det matematiske studiet av ventelinjer og danner det
+teoretiske fundamentet for kapasitetsplanlegging ved lufthavner. I denne
+studien betraktes gatene og fjernparkeringene som "tjenesteytere"
+(servers), mens ankommende fly representerer "kunder" i systemet.</p>
+<p>Sentrale prinsipper fra køteorien som er relevante for modellen
+inkluderer:</p>
+<ul>
+<li><strong>Ankomstprosess:</strong> Tidspunktet mellom ankomster
+(inter-arrival times). Selv om flyprogrammet er deterministisk, skaper
+forsinkelser i luften en stokastisk ankomstprosess.</li>
+<li><strong>Tjenestetid (Service Time):</strong> Turnaround-tiden et fly
+opptar en gate. Denne varierer med flytype, passasjerantall og
+destinasjon.</li>
+<li><strong>Kødisiplin:</strong> Reglene for hvem som betjenes først.
+Modellen bruker en kombinasjon av "First-Come, First-Served" (FCFS) og
+strategisk prioritering basert på flystørrelse.</li>
+<li><strong>Littles Lov (<span
+class="math inline"><em>L</em> = <em>λ</em><em>W</em></span>):</strong>
+En fundamental sammenheng som sier at gjennomsnittlig antall fly i
+systemet er lik ankomstraten multiplisert med gjennomsnittlig
+ventetid.</li>
+</ul>
+<p>Selv om analytiske modeller (som M/M/s-køer) kan gi raske estimater,
+begrenses de av flyplassens fysiske restriksjoner og gjensidig avhengige
+ressurser, noe som nødvendiggjør bruk av simulering.</p>
+<h3 id="22-diskret-hendelse-simulering-des">2.2 Diskret-hendelse
+simulering (DES)</h3>
+<p>Diskret-hendelse simulering (Discrete Event Simulation - DES) er
+valgt som den primære modelleringsmetoden for denne studien. I
+motsetning til kontinuerlig simulering, hvor tilstanden endres uavbrutt
+over tid, fokuserer DES på spesifikke tidspunkter (hendelser) der
+systemets tilstand endres – for eksempel når et fly lander, en gate blir
+ledig, eller en buss starter transport.</p>
+<p>Valget av DES og biblioteket SimPy i Python begrunnes med følgende
+faktorer:</p>
+<ul>
+<li><strong>Håndtering av ressurskonflikter:</strong> Flyplassdrift er
+preget av komplekse avhengigheter. Et fly som skal til en remote-stand,
+krever ikke bare en ledig parkeringsplass, men også en ledig buss og en
+tilgjengelig sjåfør samtidig. DES er spesielt sterkt på å modellere
+slike kø- og ressurssituasjoner.</li>
+<li><strong>Stokastiske elementer:</strong> Selv om flyprogrammet er
+fastlagt, vil faktiske ankomst- og avgangstider ofte variere. Simulering
+gjør det mulig å introdusere variabilitet og teste systemets
+robusthet.</li>
+<li><strong>Modellering av logiske regler:</strong> Flesland har
+komplekse begrensninger, som for eksempel "flex-gater" som kan skifte
+mellom innland og utland, men ikke begge deler samtidig. Slike betingede
+logiske regler er langt enklere å programmere i et DES-miljø enn å
+beregne med statiske matematiske modeller.</li>
+</ul>
+<h2 id="3-metode">3. Metode</h2>
+<h3 id="31-forskningsdesign">3.1 Forskningsdesign</h3>
+<p>Studien benytter et kvantitativt forskningsdesign basert på
+datasimulering. Dette designet er valgt fordi flyplassdrift er et
+"high-stakes" miljø hvor eksperimentering i reell drift er praktisk
+umulig, ekstremt kostbart og potensielt risikabelt for sikkerheten og
+punktligheten.</p>
+<p>Simulering som forskningsmetode gir oss et "digitalt laboratorium"
+hvor vi kan:</p>
+<ol type="1">
+<li><strong>Isolere variabler:</strong> Vi kan endre nøyaktig én
+variabel (f.eks. antall busssjåfører) mens vi holder flyprogrammet og
+gatestrukturen helt konstant, noe som gjør det mulig å identifisere
+direkte årsakssammenhenger.</li>
+<li><strong>Stress-teste systemet:</strong> Vi kan simulere ekstreme
+scenarioer, som 20% trafikkvekst, for å identifisere "knekkpunkter" i
+infrastrukturen før de oppstår i virkeligheten.</li>
+<li><strong>Dokumentere "As-Is" vs. "To-Be":</strong> Ved først å
+verifisere en baseline-modell mot dagens drift, skapes et solid
+fundament for å evaluere effekten av fremtidige strategiske
+endringer.</li>
+</ol>
+<h3 id="32-datainnsamling-og-datapreparering">3.2 Datainnsamling og
+Datapreparering</h3>
+<p>Datagrunnlaget for studien består av tre hovedkilder levert av
+Avinor:</p>
+<ol type="1">
+<li><strong>Flyprogram (Juni 2026):</strong> Inneholder planlagte
+flyvninger med detaljer om flytype, setekapasitet og destinasjon
+(D/I/S).</li>
+<li><strong>Rotasjonsdata (Koblede fly):</strong> Datasett som kobler
+ankommende fly med deres påfølgende avgang. Dette er kritisk for å
+modellere hvor lenge et fly faktisk opptar en gate ("turnaround
+time").</li>
+<li><strong>Busslogger:</strong> Historiske data over busstransport som
+er brukt til å validere tidsbruk for transport mellom terminal og
+remote-stands.</li>
+</ol>
+<p><strong>Datavask-prosessen (Data Cleaning):</strong> Rådataene ble
+behandlet ved hjelp av Python-biblioteket Pandas for å sikre et
+konsistent input-format for simuleringsmodellen
+(<code>simulation_input.csv</code>). Prosessen innebar følgende
+steg:</p>
+<ul>
+<li><strong>Metadata-kobling:</strong> Informasjon om setekapasitet og
+ruteinformasjon (Domestics, International, Schengen) ble koblet på
+rotasjonsdataene basert på flynummer.</li>
+<li><strong>Håndtering av Nightstops:</strong> Flyvninger som overnatter
+på lufthavnen ble identifisert og gitt en standardisert varighet i
+modellen for å sikre at de ikke blokkerer gates unødig i rushtiden.</li>
+<li><strong>Tidsberegning:</strong> Alle klokkeslett ble konvertert fra
+HH:MM-format til "minutter fra midnatt" for å forenkle tidsstyringen i
+SimPy-miljøet.</li>
+<li><strong>Beregning av oppholdstid:</strong> Faktisk tid ved gate ble
+beregnet som differansen mellom ankomst- og avgangstid, med håndtering
+av flyvninger som strekker seg over midnatt.</li>
+</ul>
+<p>Resultatet av denne prosessen er et vasket datasett der hvert objekt
+representerer en unik "gate-hendelse" med alle nødvendige parametere for
+simuleringen.</p>
+<p><strong>Forutsetninger og Modellantagelser:</strong> Siden studien
+kombinerer fremtidige data (Flyprogram 2026) med historiske logger
+(2025), er det gjort enkelte nødvendige antagelser for å kunne
+gjennomføre simuleringen:</p>
+<ul>
+<li><strong>Rotasjonskobling:</strong> Da det planlagte flyprogrammet
+for 2026 ikke eksplisitt oppgir hvilke fysiske flymaskiner som utfører
+hvilke ruter (fly-halenummer), er ankommende og avgående flyvninger
+koblet sammen manuelt basert på flyselskap, flytype og tidsvinduer.
+Dette danner grunnlaget for beregnet "turnaround"-tid ved gate.</li>
+<li><strong>Representativitet:</strong> Det legges til grunn at
+historiske busstider og driftstrender observert i 2025 er representative
+for den operasjonelle situasjonen i 2026.</li>
+<li><strong>Fastlagt varighet:</strong> For flyvninger med ufullstendige
+data eller spesielle operasjoner (som nattstopp), er det benyttet
+standardiserte tider for å sikre at modellen ikke stopper opp på grunn
+av manglende tidsverdier.</li>
+</ul>
+<h3 id="33-simuleringsmodell-modellbygging">3.3 Simuleringsmodell
+(Modellbygging)</h3>
+<p>Modellen er bygget i Python ved bruk av biblioteket SimPy for
+diskret-hendelse simulering. Hovedlogikken i modellen følger flyets
+syklus fra ankomst til parkering:</p>
+<p><strong>1. Logikk for Sonehåndtering og Flex-gater:</strong> En av de
+mest kritiske funksjonene i modellen er håndteringen av "flex-gater"
+(gate 24-32). Disse gatene kan fysisk betjene ulike soner (Innland,
+Schengen, Non-Schengen), men med strenge logiske begrensninger:</p>
+<ul>
+<li><strong>Sone-isolering:</strong> Dersom en flex-gate brukes av et
+fly fra en Non-Schengen-destinasjon, kan ikke de tilstøtende gatene i
+samme seksjon brukes av Schengen-fly samtidig på grunn av
+grensekontroll-restriksjoner.</li>
+<li><strong>Algoritme for gatesøk:</strong> Modellen implementerer en
+<code>finn_ledig_gate</code>-funksjon som søker gjennom gatene i en
+prioritert rekkefølge basert på flyets sone (D/I/S). Funksjonen
+validerer hver gate mot <code>sjekk_sone_konflikt</code>, som sikrer at
+ingen sikkerhetsregler brytes ved parkering.</li>
+</ul>
+<p><strong>2. Strategisk Remote-parkering:</strong> For å optimalisere
+gate-utnyttelsen i rushtiden (Peak kl. 15:00–17:30), er det implementert
+en logikk som sender "små fly" (definert som fly med under 120
+passasjerer) direkte til remote-parkering dersom det er ledig
+busskapasitet. Dette sparer terminalkapasitet for de største maskinene
+som krever bro-tilkobling for effektiv tømming og lasting.</p>
+<p><strong>3. Ressurs-samspill (Buss og Sjåfør):</strong> Når et fly
+sendes til remote-parkering, utløses en underprosess
+(<code>busstransport</code>) som krever to ressurser samtidig: en buss
+og en sjåfør. Antall turer beregnes ut fra passasjerantallet på flyet
+(busskapasitet 80 pax), og modellen simulerer kjøretid mellom stand og
+terminal. Dette gjør det mulig å identifisere flaskehalser ikke bare i
+antall parkeringsplasser, men også i personellkapasitet.</p>
+<h3 id="34-validering-og-verifisering">3.4 Validering og
+Verifisering</h3>
+<p>For å sikre at simuleringsmodellen er pålitelig, er det gjennomført
+grundige prosesser for både verifisering og validering.</p>
+<p><strong>Verifisering (Bygge modellen riktig):</strong> Verifiseringen
+har fokusert på å sikre at den programmerte logikken i SimPy samsvarer
+med de tiltenkte reglene for lufthavndriften:</p>
+<ul>
+<li><strong>Trace-logger:</strong> Det er benyttet detaljerte
+hendelseslogger under utviklingen for å manuelt kontrollere at fly
+sendes til riktige soner og at flex-gate-restriksjoner overholdes uten
+logiske feil.</li>
+<li><strong>Debugger og Stress-test:</strong> Koden er testet med
+ekstreme verdier (f.eks. null sjåfører eller uendelig mange fly) for å
+se at feilhåndteringen og kømekanismene fungerer som forventet.</li>
+<li><strong>Modulbasert testing:</strong> Funksjoner som
+<code>sjekk_sone_konflikt</code> og <code>finn_ledig_gate</code> er
+testet isolert for å bekrefte at de returnerer korrekte verdier under
+ulike parkeringsscenarioer.</li>
+</ul>
+<p><strong>Validering (Bygge den riktige modellen):</strong>
+Valideringen skal bekrefte at modellen gir et realistisk bilde av
+forholdene ved Bergen Lufthavn:</p>
+<ul>
+<li><strong>Face Validity:</strong> Modellen og dens resultater er
+vurdert opp mot domenekunnskap og faktiske driftserfaringer. At
+baseline-simuleringen viser lave ventetider med to sjåfører i dagens
+drift, samsvarer med observasjoner fra lufthavnen.</li>
+<li><strong>Historisk sammenligning:</strong> Tidsbruk for busstransport
+og turnaround-tider i modellen er kalibrert mot de historiske
+bussloggene fra 2025 levert av Avinor.</li>
+<li><strong>Baseline-sjekk:</strong> Resultatene fra kapittel 4.2
+fungerer som en plausibilitetssjekk; når modellen håndterer en full dags
+trafikk (17. juni 2026) uten urimelige køtopper eller systemstans,
+styrker dette tilliten til at modellen er egnet for videre
+scenarieanalyse.</li>
+</ul>
+<h2 id="4-resultater-og-analyse">4. Resultater og Analyse</h2>
+<h3 id="41-deskriptiv-statistikk-av-rådata">4.1 Deskriptiv statistikk av
+rådata</h3>
+<p>Før simuleringen ble gjennomført, ble det vaskede datasettet for den
+valgte testdagen (17. juni 2026) analysert for å forstå
+trafikkbelastningen. Denne dagen representerer en travel sommerdag med
+totalt <strong>141 flybevegelser</strong> (rotasjoner).</p>
+<p><strong>Fordeling av destinasjonssoner (D/I/S):</strong></p>
+<ul>
+<li><strong>Innland (D):</strong> 97 flyvninger (68,8%)</li>
+<li><strong>Schengen (S):</strong> 38 flyvninger (27,0%)</li>
+<li><strong>Non-Schengen (I):</strong> 6 flyvninger (4,2%)</li>
+</ul>
+<p>Dominansen av innenlandstrafikk stiller store krav til gatene i den
+rene innlandssonen, mens de fleksible gatene i
+Schengen/Non-Schengen-området må håndtere en betydelig andel av de
+resterende flyvningene.</p>
+<p><strong>Flystørrelse og kapasitet:</strong></p>
+<ul>
+<li><strong>Små fly (&lt;120 seter):</strong> 81 flyvninger</li>
+<li><strong>Store fly (&gt;=120 seter):</strong> 60 flyvninger</li>
+<li><strong>Gjennomsnittlig setekapasitet:</strong> 124,7 seter per
+fly</li>
+</ul>
+<p>Det høye antallet små fly (over 57%) bekrefter potensialet for den
+strategiske fjernparkeringen i rushtiden, da disse flyene utgjør en
+betydelig volummasse som ellers ville blokkert gate-kapasitet for de
+større maskinene. De fleste av disse små maskinene er Widerøe- og mindre
+SAS-flyvninger som er godt egnet for busstransport.</p>
+<h3 id="42-simuleringsresultater-baseline">4.2 Simuleringsresultater
+(Baseline)</h3>
+<p>Simuleringen ble kjørt med data for en representativ travel dag (17.
+juni 2026). Baseline-scenarioet reflekterer dagens drift med 2
+tilgjengelige busssjåfører og strategisk bruk av remote-parkering for
+små fly i rushtiden.</p>
+<p><strong>Resultater fra simuleringen:</strong></p>
+<ul>
+<li><strong>Totalt antall fly håndtert:</strong> 141</li>
+<li><strong>Parkering ved Gate:</strong> 130 fly</li>
+<li><strong>Parkering ved Remote:</strong> 11 fly (hvorav de fleste var
+strategiske valg for å frigjøre gate-plass)</li>
+<li><strong>Gjennomsnittlig ventetid:</strong> 0,7 minutter</li>
+<li><strong>Maksimal ventetid:</strong> 15 minutter (forekommer i de
+mest kritiske trafikktoppene)</li>
+<li><strong>Avviste fly:</strong> 0</li>
+</ul>
+<p>Analysen viser at dagens strategi med to sjåfører er tilstrekkelig
+for å holde ventetiden svært lav, selv med et høyt antall bevegelser.
+Den strategiske flyttingen av 11 fly til remote bidrar direkte til at de
+største flyene (f.eks. DY1849 og KL1169) kan gå direkte til gate uten
+forsinkelser.</p>
+<h3 id="43-scenarieanalyse">4.3 Scenarieanalyse</h3>
+<p>For å besvare forskningsspørsmålene om systemets robusthet og
+kritiske grenser, ble det gjennomført to målrettede
+scenarieanalyser.</p>
+<p><strong>Scenario 1: Redusert bemanning (Stress-test av
+sjåførkapasitet)</strong> I dette scenariet ble antall tilgjengelige
+busssjåfører redusert fra to til én på den travleste dagen i datasettet
+(17. juni). Hensikten var å identifisere hvor avhengig den strategiske
+gate-planleggingen er av kontinuerlig busskapasitet.</p>
+<p><em>Resultater:</em></p>
+<ul>
+<li><strong>Gjennomsnittlig ventetid:</strong> Økte fra 0,7 til 0,9
+minutter.</li>
+<li><strong>Antall strategiske remote-parkeringer:</strong> Redusert fra
+11 til 8.</li>
+<li><strong>Maksimal ventetid:</strong> Vedvarte på 15 minutter.</li>
+</ul>
+<p><em>Analyse av sårbarhet:</em> Selv om den gjennomsnittlige
+ventetiden kun økte marginalt i en ideell simulering, viser resultatene
+en betydelig økt sårbarhet i systemet. Med kun én sjåfør har ikke
+lufthavnen lenger den samme operative "bufferen". Modellen velger å
+sende færre fly til remote-parkering fordi busskapasiteten er
+beslaglagt, noe som tvinger flere fly inn til terminalgatene.</p>
+<p>Det er viktig å understreke at denne simuleringen tar utgangspunkt i
+et deterministisk flyprogram. I den faktiske daglige driften forekommer
+forsinkelser av ulik grad – både ved ankomst og avgang – hver eneste
+dag. Når systemet allerede opererer "på grensen" med én sjåfør, vil
+slike uforutsette forskyvninger i flyprogrammet raskt kunne føre til at
+gate-konflikter forplanter seg og skaper betydelige køer som modellen i
+en ideell tilstand ikke fanger opp fullt ut. To sjåfører må derfor anses
+som et minimum for å opprettholde en robust drift som tåler daglige
+avvik.</p>
+<p><strong>Scenario 2: Fremtidig trafikkvekst (+20 % i Peak)</strong>
+Dette scenariet simulerer en fremtidig situasjon hvor antall
+flybevegelser i den mest kritiske rushtiden (kl. 15:00–17:30) øker med
+20 %. Hensikten var å undersøke om dagens gate-konfigurasjon og
+ressursallokering har tilstrekkelig reservekapasitet.</p>
+<p><em>Resultater:</em></p>
+<ul>
+<li><strong>Totalt antall fly håndtert:</strong> 147 (en økning på 6
+bevegelser i peak-vinduet).</li>
+<li><strong>Gjennomsnittlig ventetid:</strong> 0,9 minutter.</li>
+<li><strong>Maksimal ventetid:</strong> 15 minutter.</li>
+<li><strong>Fly til Remote:</strong> Økte til 12 fly.</li>
+</ul>
+<p><em>Analyse av kapasitetsreserve:</em> Simuleringen viser at dagens
+infrastruktur ved Bergen Lufthavn har en betydelig innebygd robusthet.
+Ved å øke trafikken med 20 % i rushtiden, øker den gjennomsnittlige
+ventetiden kun marginalt fra 0,7 til 0,9 minutter. Dette skyldes i stor
+grad systemets evne til å distribuere mindre fly til remote-stands, noe
+som skjermer terminalkapasiteten for de største flyvningene.</p>
+<p>Suksessfaktorene for å håndtere denne veksten er:</p>
+<ol type="1">
+<li><strong>Aktiv gate-styring:</strong> Den strategiske prioriteringen
+av store fly til gate-broer fungerer som en effektiv regulator.</li>
+<li><strong>Fleksibilitet i gate-oppsettet:</strong> Utnyttelsen av
+flex-gater gjør det mulig å absorbere svingninger i
+trafikksammensetningen (D/I/S).</li>
+<li><strong>Tilstrekkelig busskapasitet:</strong> To sjåfører er nok til
+å håndtere de ekstra remote-operasjonene uten at busskøer blir den
+begrensende faktoren.</li>
+</ol>
+<p>Konklusjonen fra dette scenariet er at lufthavnen har kapasitet til
+moderat vekst med dagens operasjonsmodell, men at dette forutsetter at
+man opprettholder både personellressursene og den aktive styringen av
+parkeringsvalg. En ytterligere vekst utover 20 % vil sannsynligvis kreve
+enten fysiske utvidelser av terminalen eller mer radikale endringer i
+turnaround-prosesser.</p>
+<h3 id="44-robusthet-og-følsomhet">4.4 Robusthet og følsomhet</h3>
+<p>Da den nåværende simuleringsmodellen baserer seg på et fastlagt
+flyprogram uten tilfeldige (stokastiske) forsinkelser, er resultatene
+fra hver kjøring deterministiske. Dette begrenser studiens statistiske
+generaliserbarhet og må tas med i tolkningen av funnene:</p>
+<p><strong>1. Representativitet gjennom "stress-testing":</strong> Ved å
+velge 17. juni 2026 som utgangspunkt, har vi valgt en av de travleste
+dagene i det planlagte sommerprogrammet. I kapasitetsplanlegging er det
+ofte viktigere å forstå systemets oppførsel under maksimal belastning
+(Peak Load) enn under gjennomsnittlig belastning. Resultatene kan derfor
+tolkes som en analyse av systemets ytelse under høy belastning, men de
+gir ikke grunnlag for statistiske slutninger om alle årets øvrige
+driftsdager.</p>
+<p><strong>2. Sensitivitetsanalyse som validitetssjekk:</strong> De
+gjennomførte scenariene i kapittel 4.3 fungerer som en
+sensitivitetsanalyse. Ved å systematisk endre én parameter (f.eks.
+antall sjåfører eller trafikkvolum), dokumenterer vi hvordan systemets
+ytelse responderer på endringer i randbetingelsene. At vi ser en logisk
+og konsistent endring i operasjonsmønsteret (redusert bruk av remote ved
+lav bemanning), bekrefter at modellen har høy intern validitet.</p>
+<p><strong>3. Begrensninger ved deterministiske modeller:</strong> Selv
+om resultatene er relevante for kapasitetsplanlegging, må det
+understrekes at fraværet av stokastisk variasjon (tilfeldige
+forsinkelser) gjør at modellen ikke kan beregne konfidensintervaller for
+ventetider. Funnene må derfor tolkes som et analytisk grunnlag for
+systemets kapasitet, hvor man i praktisk drift må legge til en
+sikkerhetsmargin for å fange opp daglig variabilitet. For en
+bacheloroppgave gir denne deterministiske tilnærmingen likevel et
+tilstrekkelig presist bilde av de strukturelle flaskehalsene ved
+lufthavnen.</p>
+<h2 id="5-diskusjon">5. Diskusjon</h2>
+<h3 id="51-tolkning-av-funn">5.1 Tolkning av funn</h3>
+<p>Simuleringsresultatene viser at dagens operasjonsmodell ved Bergen
+Lufthavn Flesland er svært effektiv under normale forhold. En
+gjennomsnittlig ventetid på under ett minutt for gate-tildeling på årets
+travleste dag indikerer et system i god balanse. Hovedårsaken til dette
+er ikke nødvendigvis et overskudd av gater, men den aktive styringen der
+mindre flyvninger (typisk Widerøe og regionale SAS-ruter) flyttes til
+remote-stands i peak-periodene.</p>
+<p>Stresstesten i Scenario 1 avslørte imidlertid en skjult sårbarhet.
+Selv om ventetiden statistisk sett forble lav med kun én sjåfør,
+forsvant systemets evne til å bruke fjernparkering som en strategisk
+"sikkerhetsventil". Dette tvinger flere fly inn til terminalen, noe som
+øker risikoen for kjedereaksjoner ved forsinkelser. Som påpekt i
+analysen, er virkeligheten preget av daglige avvik som ikke fanges opp i
+en deterministisk modell. Diskusjonen om bemanning bør derfor ikke
+handle om gjennomsnittlig tidsbruk, men om risikoen for systemkollaps
+ved avvik.</p>
+<h3 id="52-sammenligning-med-teori">5.2 Sammenligning med teori</h3>
+<p>Resultatene underbygger sentrale prinsipper i køteorien. Ved å flytte
+små fly til remote-stands, reduserer vi i praksis ankomstraten (<span
+class="math inline"><em>λ</em></span>) til de begrensede terminalgatene.
+I henhold til Littles Lov (<span
+class="math inline"><em>L</em> = <em>λ</em><em>W</em></span>) fører
+dette direkte til lavere ventetid (<span
+class="math inline"><em>W</em></span>) for de store maskinene som er
+helt avhengige av gate-broer.</p>
+<p>Bruk av diskret-hendelse simulering (DES) har vist seg nødvendig for
+å fange opp samspillet mellom uavhengige ressurser. En ren analytisk
+modell ville hatt vanskeligheter med å illustrere hvordan mangelen på én
+sjåfør begrenser utnyttelsen av de fysiske parkeringsplassene på remote.
+Dette bekrefter at kapasitet ved en lufthavn ikke er en statisk verdi
+(antall gater), men en dynamisk funksjon av både infrastruktur,
+personell og logiske trafikkregler.</p>
+<h3 id="53-praktiske-implikasjoner">5.3 Praktiske implikasjoner</h3>
+<p>Basert på funnene i denne studien, trekkes følgende anbefalinger for
+Avinor:</p>
+<ol type="1">
+<li><strong>Oppretthold bemanningsnivået:</strong> To busssjåfører i
+rushtiden er kritisk, ikke for den gjennomsnittlige flyvningen, men for
+å opprettholde den operative fleksibiliteten som trengs for å håndtere
+daglige forsinkelser og unngå gate-konflikter ved terminalen.</li>
+<li><strong>Videreføring av strategisk fjernparkering:</strong>
+Praksisen med å sende fly under 120 passasjerer til remote-stands i peak
+bør institusjonaliseres ytterligere, da simuleringen viser at dette er
+den viktigste faktoren for å absorbere trafikkvekst på inntil 20 %.</li>
+<li><strong>Digital tvilling for sanntidsstøtte:</strong> Funnene viser
+at simulering er et kraftfullt verktøy for å evaluere kapasitet. Avinor
+bør vurdere å integrere lignende modeller i den daglige operative
+planleggingen (APOC) for å forutse gate-konflikter før de oppstår
+fysisk.</li>
+</ol>
+<h2 id="6-konklusjon">6. Konklusjon</h2>
+<h3 id="61-oppsummering">6.1 Oppsummering</h3>
+<p>Denne studien har undersøkt effektiviteten av gate-utnyttelse og
+busstransport ved Bergen Lufthavn Flesland gjennom en diskret-hendelse
+simulering. Resultatene bekrefter at dagens operasjonsmodell, preget av
+strategisk bruk av fjernparkering for mindre flymaskiner i rushtiden, er
+svært robust og sikrer lave ventetider for passasjerene selv på de
+travleste dagene.</p>
+<p>Hovedkonklusjonen er at dagens bemanningsnivå med to busssjåfører i
+rushtiden fungerer som en kritisk buffer for lufthavnens kapasitet.
+Simuleringen viser at lufthavnen kan håndtere en trafikkvekst på inntil
+20 % med nåværende infrastruktur, forutsatt at man opprettholder den
+aktive styringen av flyparkering. Samtidig avslørte studien at en
+reduksjon i bemanning gjør systemet sårbart for kjedereaksjoner, noe som
+i en virkelig operasjon med daglige forsinkelser vil kunne føre til
+betydelige driftsproblemer.</p>
+<h3 id="62-begrensninger-ved-studien">6.2 Begrensninger ved studien</h3>
+<p>Selv om simuleringsmodellen gir verdifull innsikt, er det viktig å
+anerkjenne enkelte begrensninger:</p>
+<ul>
+<li><strong>Deterministisk tilnærming:</strong> Modellen baserer seg på
+et fastlagt ruteprogram uten stokastiske forsinkelser. I realiteten vil
+daglige avvik i ankomst- og avgangstider kunne forsterke kødannelser
+utover det modellen viser.</li>
+<li><strong>Datakoblinger:</strong> Bruken av historiske logger fra 2025
+kombinert med et fremtidig ruteprogram for 2026 krever antagelser om
+flyrotasjoner som ikke nødvendigvis reflekterer selskapenes faktiske
+flåtestyring.</li>
+<li><strong>Isolert system:</strong> Studien har kun sett på gate- og
+busskapasitet. Faktorer som bagasjehåndtering, tilgang på bakkemannskap
+(ground handling) og værforhold er holdt utenfor modellen.</li>
+</ul>
+<h3 id="63-forslag-til-videre-forskning">6.3 Forslag til videre
+forskning</h3>
+<p>For å videreutvikle forståelsen av kapasitetsutfordringene på
+Flesland, foreslås følgende områder for videre arbeid:</p>
+<ol type="1">
+<li><strong>Stokastisk simulering:</strong> Utvide modellen med Monte
+Carlo-metoder for å simulere tilfeldige forsinkelser, noe som vil gi et
+mer realistisk bilde av sårbarheten i Peak.</li>
+<li><strong>Integrert ressursmodellering:</strong> Inkludere flere
+bakketjenester, som for eksempel tilgang på "pushback"-traktorer og
+bagasje-personell, for å identifisere kryssende flaskehalser.</li>
+<li><strong>Miljø- og kostnadsanalyse:</strong> Utvide modellen til å
+beregne drivstofforbruk og utslipp knyttet til økt bruk av busser kontra
+tomgangskjøring ved gate-konflikter.</li>
+</ol>
+<hr />
+<h2 id="referanser">Referanser</h2>
+<ul>
+<li>Avinor. (2025). Busslogger og operasjonelle data for Bergen Lufthavn
+Flesland.</li>
+<li>Pidd, M. (2004). <em>Computer Simulation in Management Science</em>.
+Wiley.</li>
+<li>SimPy Documentation. (2024). <em>Discrete event simulation in
+Python</em>.</li>
+</ul>
+<hr />
+<h2 id="vedlegg">Vedlegg</h2>
+<p><em>A: Kildekode (Python/SimPy) - lokalisert i
+<code>src/simulation.py</code></em><br />
+<em>B: Datavask-dokumentasjon - lokalisert i
+<code>src/clean_data.py</code></em></p>
+</body>
+</html>
