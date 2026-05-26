@@ -2,7 +2,7 @@
 ## En kvantitativ simuleringsstudie av gate-utnyttelse og busstransport
 
 **Gruppe:** G03 - Bergens Beste  
-**Emne:** LOG650 - Bacheloroppgave i Logistikk  
+**Emne:** LOG650 - Forskningsprosjekt i Logistikk  
 **Dato:** 30. april 2026
 
 ---
