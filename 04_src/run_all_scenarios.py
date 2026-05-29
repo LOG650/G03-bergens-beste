@@ -1,10 +1,13 @@
 import sys
-import os
+from pathlib import Path
 import pandas as pd
 from tabulate import tabulate
 
 # Legg til src i path hvis nødvendig
-sys.path.append(os.path.join(os.getcwd(), 'G03-bergens-beste/04_src'))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / "04_src"
+DATA_DIR = PROJECT_ROOT / "03_data"
+sys.path.append(str(SRC_DIR))
 from simulation import run_simulation
 
 def main():
@@ -18,7 +21,8 @@ def main():
         'kjøretid': 6,
         'strategisk_remote': True,
         'trafikkvekst': 0,
-        'stokastisk': False
+        'stokastisk': False,
+        'seed': 42
     })
     
     # 2. SJÅFØRKAPASITET
@@ -30,7 +34,8 @@ def main():
             'kjøretid': 6,
             'strategisk_remote': True,
             'trafikkvekst': 0,
-            'stokastisk': False
+            'stokastisk': False,
+            'seed': 42 + s
         })
         
     # 3. REMOTE-STRATEGI AV
@@ -41,11 +46,12 @@ def main():
         'kjøretid': 6,
         'strategisk_remote': False,
         'trafikkvekst': 0,
-        'stokastisk': False
+        'stokastisk': False,
+        'seed': 42
     })
     
     # 4. TRAFIKKVEKST
-    for v in [0.10, 0.20, 0.30]:
+    for idx, v in enumerate([0.10, 0.20, 0.30], start=1):
         scenarios.append({
             'name': f'Trafikkvekst: +{v*100:.0f}% i peak',
             'antall_sjåfører': 2,
@@ -53,7 +59,8 @@ def main():
             'kjøretid': 6,
             'strategisk_remote': True,
             'trafikkvekst': v,
-            'stokastisk': False
+            'stokastisk': False,
+            'seed': 100 + idx
         })
         
     # 5. STOKASTISK (Realistiske forsinkelser)
@@ -67,7 +74,8 @@ def main():
             'kjøretid': 6,
             'strategisk_remote': True,
             'trafikkvekst': 0,
-            'stokastisk': True
+            'stokastisk': True,
+            'seed': 200 + i
         }
         stokastisk_results.append(run_simulation(config))
     
@@ -94,17 +102,20 @@ def main():
         'kjøretid': 7.2,
         'strategisk_remote': True,
         'trafikkvekst': 0,
-        'stokastisk': False
+        'stokastisk': False,
+        'seed': 42
     })
-    scenarios.append({
-        'name': 'Følsomhet: Busskapasitet 60 pax',
-        'antall_sjåfører': 2,
-        'buss_kapasitet': 60,
-        'kjøretid': 6,
-        'strategisk_remote': True,
-        'trafikkvekst': 0,
-        'stokastisk': False
-    })
+    for kapasitet in [60, 70, 90]:
+        scenarios.append({
+            'name': f'Følsomhet: Busskapasitet {kapasitet} pax',
+            'antall_sjåfører': 2,
+            'buss_kapasitet': kapasitet,
+            'kjøretid': 6,
+            'strategisk_remote': True,
+            'trafikkvekst': 0,
+            'stokastisk': False,
+            'seed': 42
+        })
 
     # KJØR SIMULERINGER
     all_results = []
@@ -132,7 +143,7 @@ def main():
     print("="*80)
     
     # Lagre til CSV
-    output_path = "G03-bergens-beste/03_data/scenario_results.csv"
+    output_path = DATA_DIR / "scenario_results.csv"
     df_res.to_csv(output_path, index=False)
     print(f"\nResultater lagret til {output_path}")
 

@@ -1,11 +1,14 @@
 import simpy
 import pandas as pd
 import numpy as np
-import os
+from pathlib import Path
 
 # --- KONFIGURASJON (DEFAULTS) ---
 BUSS_KAPASITET_DEFAULT = 80
 KJØRETID_DEFAULT = 6 
+DEFAULT_SEED = 42
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = PROJECT_ROOT / "03_data"
 
 INNLAND_FASTE = [15, 16, 17, 18, 19, 20] 
 NON_SCHENGEN_BASE = [23]
@@ -137,8 +140,10 @@ def parker(env, fly_id, gate, sone, fly_data, flyplass, smp, ankomst_min, pax):
 
 def run_simulation(config):
     # Laste data
-    df = pd.read_csv("G03-bergens-beste/03_data/simulation_input.csv")
+    df = pd.read_csv(DATA_DIR / "simulation_input.csv")
     df = df[df['Date'] == "2026-06-17"].copy()
+    seed = config.get('seed', DEFAULT_SEED)
+    rng = np.random.default_rng(seed)
     
     def parse_t(s):
         if not isinstance(s, str) or ':' not in s: return 0
@@ -152,16 +157,16 @@ def run_simulation(config):
         peak_flights = df[(df['In_Min'] >= 900) & (df['In_Min'] <= 1050)].copy()
         num_extra = int(len(peak_flights) * config['trafikkvekst'])
         if num_extra > 0:
-            extra_flights = peak_flights.sample(n=num_extra, replace=True).copy()
+            extra_flights = peak_flights.sample(n=num_extra, replace=True, random_state=seed).copy()
             # Legg til litt forskyvning så de ikke kommer nøyaktig samtidig
-            extra_flights['In_Min'] += np.random.randint(-5, 6, size=len(extra_flights))
+            extra_flights['In_Min'] += rng.integers(-5, 6, size=len(extra_flights))
             df = pd.concat([df, extra_flights])
     
     # Legg til stokastiske forsinkelser
     if config['stokastisk']:
-        # Bruk en log-normal fordeling for forsinkelser (alltid positiv eller null)
+        # Bruk en eksponentialfordeling for forsinkelser (alltid positiv eller null)
         # Gjennomsnittlig 5 min forsinkelse, noen mer
-        forsinkelser = np.random.exponential(scale=5, size=len(df))
+        forsinkelser = rng.exponential(scale=5, size=len(df))
         df['In_Min'] += forsinkelser
     
     df = df.sort_values(by=['In_Min', 'Seats'], ascending=[True, False])
@@ -204,7 +209,8 @@ if __name__ == "__main__":
         'kjøretid': 6,
         'strategisk_remote': True,
         'trafikkvekst': 0,
-        'stokastisk': False
+        'stokastisk': False,
+        'seed': DEFAULT_SEED
     }
     res = run_simulation(config)
     print(res)

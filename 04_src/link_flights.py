@@ -1,9 +1,13 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = PROJECT_ROOT / "03_data"
 
 # Load data
-df = pd.read_csv('G03-bergens-beste/03_data/Flyprogram 15jun - 29jun CSV.csv', sep=';')
+df = pd.read_csv(DATA_DIR / 'Flyprogram 15jun - 29jun CSV.csv', sep=';')
 df['Timestamp'] = pd.to_datetime(df['Flight Date'] + ' ' + df['Scheduled Time'])
 df = df.sort_values('Timestamp')
 
@@ -129,7 +133,7 @@ for date in df['Flight Date'].unique():
                 })
 
 # Save results
-pd.DataFrame(results).to_csv('G03-bergens-beste/03_data/Koblede_Fly_15jun-29jun.csv', index=False, sep=';')
+pd.DataFrame(results).to_csv(DATA_DIR / 'Koblede_Fly_15jun-29jun.csv', index=False, sep=';')
 print(f"File saved with {len(results)} rows.")
 
 # Output top uncertain cases for manual check

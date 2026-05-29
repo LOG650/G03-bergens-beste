@@ -1,8 +1,13 @@
 import pandas as pd
+from pathlib import Path
 
-def analyze_peaks():
-    log_path = "/Users/sandrachristensen/.gemini/tmp/log650/tool-outputs/session-2a6c74b6-548a-4ed7-8184-a9986f0f5cb4/run_shell_command_1776847028624_0.txt"
-    
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+def analyze_peaks(log_path):
+    log_path = Path(log_path)
+    if not log_path.exists():
+        raise FileNotFoundError(f"Fant ikke loggfil: {log_path}")
+
     criticals = []
     with open(log_path, 'r') as f:
         for line in f:
@@ -23,4 +28,9 @@ def analyze_peaks():
     print(peak_hours.to_string(index=False))
 
 if __name__ == "__main__":
-    analyze_peaks()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Analyser tidspunkt med KRITISK-hendelser fra en simuleringslogg.")
+    parser.add_argument("log_path", help="Sti til loggfilen som skal analyseres")
+    args = parser.parse_args()
+    analyze_peaks(args.log_path)

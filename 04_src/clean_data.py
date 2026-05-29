@@ -1,12 +1,14 @@
 import pandas as pd
 import numpy as np
-import os
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = PROJECT_ROOT / "03_data"
 
 def clean_and_merge_data():
     # Stier til filene
-    data_dir = "G03-bergens-beste/03_data"
-    flyprogram_path = os.path.join(data_dir, "Flyprogram 15jun - 29jun CSV.csv")
-    koblede_fly_path = os.path.join(data_dir, "Koblede_Fly_15jun-29jun.csv")
+    flyprogram_path = DATA_DIR / "Flyprogram 15jun - 29jun CSV.csv"
+    koblede_fly_path = DATA_DIR / "Koblede_Fly_15jun-29jun.csv"
     
     # 1. Last inn flyprogrammet for å få D/I/S og Seats per flynummer
     # Bruker low_memory=False for å unngå advarsler om dtypes
@@ -57,7 +59,7 @@ def clean_and_merge_data():
         'duration_min', 'D/I/S', 'Seats', 'Aircraft Type', 'Status'
     ]]
     
-    output_path = os.path.join(data_dir, "simulation_input.csv")
+    output_path = DATA_DIR / "simulation_input.csv"
     df_final.to_csv(output_path, index=False)
     print(f"Suksess! Vasket data lagret til: {output_path}")
     print(df_final.head())

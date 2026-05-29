@@ -8,7 +8,7 @@
 ---
 
 ## Sammendrag
-Denne rapporten undersøker kapasitetsutnyttelsen av gater og behovet for busstransport ved Bergen Lufthavn Flesland gjennom diskret-hendelse simulering (DES) i Python med SimPy. Problemstillingen fokuserer på balansen mellom maksimal utnyttelse av terminalnære gater og effektiv bruk av fjernparkering (remote stands) i peak-perioder. Ved å analysere et planlagt flyprogram for en travel sommerdag i 2026, indikerer studien at dagens operasjonsmodell med aktiv gate-styring og to tilgjengelige busssjåfører i rushtiden er robust. Resultatene viser en gjennomsnittlig ventetid på under ett minutt, selv ved høy trafikkbelastning. Scenarioanalyser viser imidlertid at systemet er sårbart ved bemanningsreduksjon til én sjåfør, da dette fjerner den operative bufferen som trengs for å håndtere uforutsette avvik. Videre indikerer simuleringen at lufthavnen har kapasitet til å håndtere en trafikkvekst på inntil 20 % i rushtiden uten vesentlig økning i ventetid, forutsatt at dagens ressursallokering opprettholdes. Rapporten konkluderer med at strategisk bruk av fjernparkering for mindre flymaskiner er en kritisk suksessfaktor for effektiv drift ved Flesland.
+Denne rapporten undersøker kapasitetsutnyttelsen av gater og behovet for busstransport ved Bergen Lufthavn Flesland gjennom diskret-hendelse simulering (DES) i Python med SimPy. Problemstillingen fokuserer på balansen mellom maksimal utnyttelse av terminalnære gater og effektiv bruk av fjernparkering (remote stands) i peak-perioder. Ved å analysere et planlagt flyprogram for en travel sommerdag i 2026, indikerer studien at dagens operasjonsmodell med aktiv gate-styring og to tilgjengelige busssjåfører i rushtiden er robust i den analyserte testdagen. Resultatene viser en gjennomsnittlig ventetid på under ett minutt i baseline-scenarioet. Scenarioanalyser viser samtidig at systemet blir mer sårbart ved bemanningsreduksjon til én sjåfør, fordi muligheten til å bruke remote stands aktivt reduseres. Videre indikerer simuleringen at lufthavnen kan håndtere moderat trafikkvekst i peak-perioden uten stor økning i gjennomsnittlig ventetid, forutsatt at dagens ressursallokering og strategiske gate-styring opprettholdes. Rapporten konkluderer med at strategisk bruk av fjernparkering for mindre flymaskiner er en viktig suksessfaktor for effektiv drift ved Flesland, men at resultatene bør tolkes som scenarioanalyse og ikke som en eksakt prediksjon av faktisk drift.
 
 ---
 
@@ -224,7 +224,7 @@ For å styrke analysens etterprøvbarhet er scenarioene strukturert som kontroll
 | Trafikkvekst | +10 %, +20 % og +30 % i peak | Gjennomført | Identifisere kapasitetsgrense |
 | Remote-strategi | Strategisk remote av/på | Gjennomført | Måle effekt av aktiv gate-styring |
 | Busstid | +20 % kjøretid | Gjennomført | Teste følsomhet for transporttid |
-| Busskapasitet | 60, 70, 80 og 90 passasjerer | Anbefalt tilleggstest | Teste effekt av kapasitet per buss |
+| Busskapasitet | 60, 70, 80 og 90 passasjerer | Delvis gjennomført / implementert i scenariooppsett | Teste effekt av kapasitet per buss |
 | Stokastiske forsinkelser | Lav, middels og høy forsinkelsesvariasjon | Delvis gjennomført / anbefalt videreført | Teste robusthet under realistiske avvik |
 
 Dersom stokastiske forsinkelser inkluderes fullt ut, bør hvert scenario kjøres mange ganger, for eksempel 100 eller 500 replikasjoner. Da kan resultatene presenteres med gjennomsnitt, standardavvik og 95 % konfidensintervall:
@@ -275,11 +275,12 @@ Tabell 1 oppsummerer de simulerte hovedresultatene fra scenarioene som hittil er
 | 1 sjåfør | 1 | 0 % | PÅ | NEI | 141 | 133 | 8 | 0,92 min | 15,0 min |
 | 3 sjåfører | 3 | 0 % | PÅ | NEI | 141 | 127 | 14 | 0,71 min | 15,0 min |
 | Remote AV | 2 | 0 % | AV | NEI | 141 | 136 | 5 | 1,21 min | 15,0 min |
-| Vekst +10 % | 2 | 10 % | PÅ | NEI | 143 | 132 | 11 | 0,70 min | 15,0 min |
-| Vekst +20 % | 2 | 20 % | PÅ | NEI | 146 | 133 | 13 | 0,96 min | 15,0 min |
-| Vekst +30 % | 2 | 30 % | PÅ | NEI | 149 | 135 | 14 | 0,97 min | 15,0 min |
+| Vekst +10 % | 2 | 10 % | PÅ | NEI | 143 | 131 | 12 | 0,80 min | 15,0 min |
+| Vekst +20 % | 2 | 20 % | PÅ | NEI | 146 | 134 | 12 | 0,79 min | 15,0 min |
+| Vekst +30 % | 2 | 30 % | PÅ | NEI | 149 | 134 | 15 | 1,07 min | 15,0 min |
 | Kjøretid +20% | 2 | 0 % | PÅ | NEI | 141 | 131 | 10 | 0,71 min | 15,0 min |
-| Stokastisk (snitt) | 2 | 0 % | PÅ | JA | 141 | 128 | 13 | 0,68 min | 15,4 min |
+| Busskapasitet 60 pax | 2 | 0 % | PÅ | NEI | 141 | 130 | 11 | 0,71 min | 15,0 min |
+| Stokastisk (snitt) | 2 | 0 % | PÅ | JA | 141 | 129 | 12 | 0,65 min | 15,3 min |
 
 Verdien 15 minutter går igjen som maksimal ventetid i flere scenarioer. Dette bør tolkes med varsomhet. Når samme maksimumsverdi opptrer gjentatte ganger, kan det tyde på at verdien delvis følger av modellens tidslogikk, for eksempel diskretisering, ventesteg eller en bestemt operasjonell terskel i simuleringen, og ikke nødvendigvis er et tilfeldig observert maksimum. Verdien er likevel nyttig som indikator på at enkelte fly møter en kapasitetskonflikt, men den bør ikke tolkes som en presis prediksjon av faktisk maksimal ventetid uten nærmere kontroll av trace-loggene.
 
@@ -310,12 +311,12 @@ Dette scenariet simulerer en fremtidig situasjon hvor antall flybevegelser i den
 *Resultater:*
 
 *   **Totalt antall fly håndtert:** 146 (en økning på 5 bevegelser i peak-vinduet).
-*   **Gjennomsnittlig ventetid:** 0,96 minutter.
+*   **Gjennomsnittlig ventetid:** 0,79 minutter.
 *   **Maksimal ventetid:** 15 minutter.
-*   **Fly til Remote:** Økte til 13 fly.
+*   **Fly til Remote:** Økte til 12 fly.
 
 *Analyse av kapasitetsreserve:*
-Simuleringen viser at dagens infrastruktur ved Bergen Lufthavn har en betydelig innebygd robusthet. Ved å øke trafikken med 20 % i rushtiden, øker den gjennomsnittlige ventetiden kun marginalt fra 0,7 til 0,9 minutter. Dette skyldes i stor grad systemets evne til å distribuere mindre fly til remote-stands, noe som skjermer terminalkapasiteten for de største flyvningene.
+Simuleringen viser at dagens infrastruktur ved Bergen Lufthavn har en betydelig innebygd robusthet. Ved å øke trafikken med 20 % i rushtiden, ligger den gjennomsnittlige ventetiden fortsatt under ett minutt. Dette skyldes i stor grad systemets evne til å distribuere mindre fly til remote-stands, noe som skjermer terminalkapasiteten for de største flyvningene.
 
 Suksessfaktorene for å håndtere denne veksten er:
 
@@ -326,7 +327,7 @@ Suksessfaktorene for å håndtere denne veksten er:
 Konklusjonen fra dette scenariet er at lufthavnen har kapasitet til moderat vekst med dagens operasjonsmodell, men at dette forutsetter at man opprettholder både personellressursene og den aktive styringen av parkeringsvalg. En ytterligere vekst utover 20 % vil sannsynligvis kreve enten fysiske utvidelser av terminalen eller mer radikale endringer i turnaround-prosesser.
 
 ### 4.4 Robusthet, følsomhet og anbefalte tilleggstester
-Den nåværende simuleringsmodellen baserer seg på et fastlagt flyprogram uten tilfeldige stokastiske forsinkelser. Resultatene fra hver kjøring er derfor deterministiske. Dette gir god kontroll over årsakssammenhenger, men begrenser den statistiske generaliserbarheten. Funnene bør derfor tolkes som en analyse av strukturell kapasitet, ikke som en full sannsynlighetsanalyse av alle mulige driftsdager.
+Hovedresultatene i simuleringsmodellen baserer seg på et fastlagt flyprogram, mens stokastiske forsinkelser bare er testet som en begrenset tilleggskjøring. Dette gir god kontroll over årsakssammenhenger, men begrenser den statistiske generaliserbarheten. Funnene bør derfor tolkes som en analyse av strukturell kapasitet, ikke som en full sannsynlighetsanalyse av alle mulige driftsdager.
 
 **1. Representativitet gjennom stress-testing**
 Ved å velge 17. juni 2026 som utgangspunkt, analyseres en travel sommerdag i det planlagte flyprogrammet. I kapasitetsplanlegging er det ofte viktigere å forstå systemets oppførsel under høy belastning enn under gjennomsnittlig belastning. Resultatene gir derfor nyttig innsikt i hvordan systemet fungerer under press, men de gir ikke alene grunnlag for å konkludere om hele året.
@@ -370,7 +371,7 @@ Scenarioet med null sjåfører viser tydeligere hvor viktig sjåførressursen er
 Resultatene viser også at tre sjåfører ikke gir lavere gjennomsnittlig ventetid enn to sjåfører i baseline-lignende drift. Det tyder på at to sjåfører er nok i den analyserte situasjonen, mens tre sjåfører først kan bli relevant ved større forsinkelser, høyere trafikkvekst eller lengre busstider.
 
 ### 5.3 FS3: Effekt av trafikkvekst i peak-perioden
-Det tredje forskningsspørsmålet undersøker hvordan økt trafikk påvirker ventetid, remote-bruk og gateutnyttelse. I scenarioet med 20 % trafikkvekst i peak øker det totale antallet fly i simuleringen fra 141 til 146, altså fem ekstra flybevegelser. Gjennomsnittlig ventetid øker fra 0,71 til 0,96 minutter, og antall remote-operasjoner øker fra 11 til 13.
+Det tredje forskningsspørsmålet undersøker hvordan økt trafikk påvirker ventetid, remote-bruk og gateutnyttelse. I scenarioet med 20 % trafikkvekst i peak øker det totale antallet fly i simuleringen fra 141 til 146, altså fem ekstra flybevegelser. Gjennomsnittlig ventetid øker fra 0,71 til 0,79 minutter, og antall remote-operasjoner øker fra 11 til 12.
 
 Resultatene tyder på at dagens operasjonsmodell tåler moderat trafikkvekst, forutsatt at strategisk remote-bruk og to sjåfører opprettholdes. Samtidig bør prosentvis vekst tolkes sammen med faktisk antall ekstra fly. En økning på 20 % i peak-vinduet gir i denne simuleringen bare fem ekstra fly totalt i den analyserte dagen. Det betyr at scenarioet viser robusthet mot moderat økning, men ikke nødvendigvis mot en vesentlig endret trafikkstruktur eller flere samtidige store fly.
 
