@@ -122,6 +122,8 @@ For å optimalisere gate-utnyttelsen i rushtiden (Peak kl. 15:00–17:30), er de
 **3. Ressurs-samspill (Buss og Sjåfør):**
 Når et fly sendes til remote-parkering, utløses en underprosess (`busstransport`) som krever to ressurser samtidig: en buss og en sjåfør. Antall turer beregnes ut fra passasjerantallet på flyet (busskapasitet 80 pax), og modellen simulerer kjøretid mellom stand og terminal. Dette gjør det mulig å identifisere flaskehalser ikke bare i antall parkeringsplasser, men også i personellkapasitet.
 
+I alle scenarioene er det brukt en operasjonell terskel på 5 minutter for ventetid før modellen forsøker å sende flyet til remote stand. Denne ventetiden måler tid fra ankomst til tildelt gate eller remote stand. Den er ikke en direkte måling av passasjerenes ventetid på buss.
+
 ### 3.4 Matematisk modellformulering
 For å gjøre simuleringsmodellen etterprøvbar, beskrives den også som en forenklet matematisk kapasitetsmodell. Den matematiske formuleringen brukes ikke til å erstatte DES-modellen, men til å tydeliggjøre hvilke beslutningsvariabler, måleparametere og begrensninger som ligger til grunn for analysen.
 
@@ -224,7 +226,7 @@ For å styrke analysens etterprøvbarhet er scenarioene strukturert som kontroll
 | Trafikkvekst | +10 %, +20 % og +30 % i peak | Gjennomført | Identifisere kapasitetsgrense |
 | Remote-strategi | Strategisk remote av/på | Gjennomført | Måle effekt av aktiv gate-styring |
 | Busstid | +20 % kjøretid | Gjennomført | Teste følsomhet for transporttid |
-| Busskapasitet | 60, 70, 80 og 90 passasjerer | Delvis gjennomført / implementert i scenariooppsett | Teste effekt av kapasitet per buss |
+| Busskapasitet | 60, 70, 80 og 90 passasjerer | Gjennomført | Teste effekt av kapasitet per buss |
 | Stokastiske forsinkelser | Lav, middels og høy forsinkelsesvariasjon | Delvis gjennomført / anbefalt videreført | Teste robusthet under realistiske avvik |
 
 Dersom stokastiske forsinkelser inkluderes fullt ut, bør hvert scenario kjøres mange ganger, for eksempel 100 eller 500 replikasjoner. Da kan resultatene presenteres med gjennomsnitt, standardavvik og 95 % konfidensintervall:
@@ -258,31 +260,33 @@ Simuleringen ble kjørt med data for en representativ travel dag (17. juni 2026)
 
 **Resultater fra simuleringen:**
 *   **Totalt antall fly håndtert:** 141
-*   **Parkering ved Gate:** 130 fly
-*   **Parkering ved Remote:** 11 fly (hvorav de fleste var strategiske valg for å frigjøre gate-plass)
-*   **Gjennomsnittlig ventetid:** 0,7 minutter
-*   **Maksimal ventetid:** 15 minutter (forekommer i de mest kritiske trafikktoppene)
+*   **Parkering ved Gate:** 128 fly
+*   **Parkering ved Remote:** 13 fly (hvorav de fleste var strategiske valg for å frigjøre gate-plass)
+*   **Gjennomsnittlig ventetid:** 0,35 minutter
+*   **Maksimal ventetid:** 5 minutter
 *   **Avviste fly:** 0
 
-Analysen viser at dagens strategi med to sjåfører er tilstrekkelig for å holde ventetiden svært lav, selv med et høyt antall bevegelser. Den strategiske flyttingen av 11 fly til remote bidrar direkte til at de største flyene (f.eks. DY1849 og KL1169) kan gå direkte til gate uten forsinkelser.
+Analysen viser at dagens strategi med to sjåfører er tilstrekkelig for å holde ventetiden svært lav, selv med et høyt antall bevegelser. Når terskelen for å forsøke remote settes til 5 minutter, flyttes noe mer trafikk fra gate til remote enn i en mer tolerant ventelogikk. Dette reduserer gjennomsnittlig ventetid, men øker samtidig behovet for operativ remote- og busskapasitet.
 
 Tabell 1 oppsummerer de simulerte hovedresultatene fra scenarioene som hittil er gjennomført. I en videreutvikling av analysen kan tabellen utvides med 95-persentil, gateutnyttelse og sjåførutnyttelse dersom disse målene hentes ut fra simuleringsmodellen.
 
 | Scenario | Sjåfører | Vekst | Remote-strat | Stokastisk | Fly | Gate | Remote | Gj.sn. ventetid | Maks ventetid |
 |:---|---:|---:|:---|:---|---:|---:|---:|---:|---:|
-| Baseline | 2 | 0 % | PÅ | NEI | 141 | 130 | 11 | 0,71 min | 15,0 min |
+| Baseline | 2 | 0 % | PÅ | NEI | 141 | 128 | 13 | 0,35 min | 5,0 min |
 | 0 sjåfører | 0 | 0 % | PÅ | NEI | 141 | 141 | 0 | 2,16 min | 60,0 min |
-| 1 sjåfør | 1 | 0 % | PÅ | NEI | 141 | 133 | 8 | 0,92 min | 15,0 min |
-| 3 sjåfører | 3 | 0 % | PÅ | NEI | 141 | 127 | 14 | 0,71 min | 15,0 min |
-| Remote AV | 2 | 0 % | AV | NEI | 141 | 136 | 5 | 1,21 min | 15,0 min |
-| Vekst +10 % | 2 | 10 % | PÅ | NEI | 143 | 131 | 12 | 0,80 min | 15,0 min |
-| Vekst +20 % | 2 | 20 % | PÅ | NEI | 146 | 134 | 12 | 0,79 min | 15,0 min |
-| Vekst +30 % | 2 | 30 % | PÅ | NEI | 149 | 134 | 15 | 1,07 min | 15,0 min |
-| Kjøretid +20% | 2 | 0 % | PÅ | NEI | 141 | 131 | 10 | 0,71 min | 15,0 min |
-| Busskapasitet 60 pax | 2 | 0 % | PÅ | NEI | 141 | 130 | 11 | 0,71 min | 15,0 min |
-| Stokastisk (snitt) | 2 | 0 % | PÅ | JA | 141 | 129 | 12 | 0,65 min | 15,3 min |
+| 1 sjåfør | 1 | 0 % | PÅ | NEI | 141 | 130 | 11 | 0,43 min | 5,0 min |
+| 3 sjåfører | 3 | 0 % | PÅ | NEI | 141 | 125 | 16 | 0,35 min | 5,0 min |
+| Remote AV | 2 | 0 % | AV | NEI | 141 | 132 | 9 | 0,53 min | 5,0 min |
+| Vekst +10 % | 2 | 10 % | PÅ | NEI | 143 | 130 | 13 | 0,35 min | 5,0 min |
+| Vekst +20 % | 2 | 20 % | PÅ | NEI | 146 | 131 | 15 | 0,41 min | 5,0 min |
+| Vekst +30 % | 2 | 30 % | PÅ | NEI | 149 | 134 | 15 | 0,40 min | 5,0 min |
+| Kjøretid +20% | 2 | 0 % | PÅ | NEI | 141 | 129 | 12 | 0,35 min | 5,0 min |
+| Busskapasitet 60 pax | 2 | 0 % | PÅ | NEI | 141 | 128 | 13 | 0,35 min | 5,0 min |
+| Busskapasitet 70 pax | 2 | 0 % | PÅ | NEI | 141 | 128 | 13 | 0,35 min | 5,0 min |
+| Busskapasitet 90 pax | 2 | 0 % | PÅ | NEI | 141 | 128 | 13 | 0,35 min | 5,0 min |
+| Stokastisk (snitt) | 2 | 0 % | PÅ | JA | 141 | 125 | 16 | 0,30 min | 5,2 min |
 
-Verdien 15 minutter går igjen som maksimal ventetid i flere scenarioer. Dette bør tolkes med varsomhet. Når samme maksimumsverdi opptrer gjentatte ganger, kan det tyde på at verdien delvis følger av modellens tidslogikk, for eksempel diskretisering, ventesteg eller en bestemt operasjonell terskel i simuleringen, og ikke nødvendigvis er et tilfeldig observert maksimum. Verdien er likevel nyttig som indikator på at enkelte fly møter en kapasitetskonflikt, men den bør ikke tolkes som en presis prediksjon av faktisk maksimal ventetid uten nærmere kontroll av trace-loggene.
+Maksimal ventetid ligger på eller svært nær 5 minutter i scenarioene der busssjåfører er tilgjengelige. Dette følger av den operasjonelle terskelen i modellen: Når et fly har ventet 5 minutter uten egnet gate, forsøker modellen å bruke remote stand dersom remote-plass og sjåførkapasitet er tilgjengelig. I den stokastiske kjøringen blir snittet 5,2 minutter fordi ankomsttidene får tilfeldige forskyvninger og simuleringstiden ikke alltid treffer terskelen helt eksakt. Unntaket er scenarioet med 0 sjåfører, der remote ikke kan brukes operativt. Derfor kan maksimal ventetid fortsatt bli 60 minutter i dette stress-scenarioet.
 
 
 ### 4.3 Scenarieanalyse
@@ -293,9 +297,9 @@ I dette scenariet ble antall tilgjengelige busssjåfører redusert fra to til é
 
 *Resultater:*
 
-*   **Gjennomsnittlig ventetid:** Økte fra 0,71 til 0,92 minutter.
-*   **Antall strategiske remote-parkeringer:** Redusert fra 11 til 8.
-*   **Maksimal ventetid:** Vedvarte på 15 minutter.
+*   **Gjennomsnittlig ventetid:** Økte fra 0,35 til 0,43 minutter.
+*   **Antall remote-parkeringer:** Redusert fra 13 til 11.
+*   **Maksimal ventetid:** Vedvarte på 5 minutter.
 
 *Analyse av sårbarhet:*
 Ekstrem-testen med **null sjåfører** viser en gjennomsnittlig ventetid på 2,16 minutter, men en maksimal ventetid på hele 60 minutter. Dette understreker at uten busstransport vil enkelte fly bli stående og blokkere for andre i svært lang tid, noe som skaper en uakseptabel driftssituasjon.
@@ -311,9 +315,9 @@ Dette scenariet simulerer en fremtidig situasjon hvor antall flybevegelser i den
 *Resultater:*
 
 *   **Totalt antall fly håndtert:** 146 (en økning på 5 bevegelser i peak-vinduet).
-*   **Gjennomsnittlig ventetid:** 0,79 minutter.
-*   **Maksimal ventetid:** 15 minutter.
-*   **Fly til Remote:** Økte til 12 fly.
+*   **Gjennomsnittlig ventetid:** 0,41 minutter.
+*   **Maksimal ventetid:** 5 minutter.
+*   **Fly til Remote:** Økte til 15 fly.
 
 *Analyse av kapasitetsreserve:*
 Simuleringen viser at dagens infrastruktur ved Bergen Lufthavn har en betydelig innebygd robusthet. Ved å øke trafikken med 20 % i rushtiden, ligger den gjennomsnittlige ventetiden fortsatt under ett minutt. Dette skyldes i stor grad systemets evne til å distribuere mindre fly til remote-stands, noe som skjermer terminalkapasiteten for de største flyvningene.
@@ -359,19 +363,19 @@ Disse testene vil gjøre det mulig å skille mellom tre ulike typer konklusjoner
 
 ## 5. Diskusjon
 ### 5.1 FS1: Effekt av strategisk fjernparkering
-Det første forskningsspørsmålet handler om i hvilken grad strategisk fjernparkering av mindre fly bidrar til å redusere gatekonflikter og ventetider i peak-perioder. Resultatene tyder på at strategisk remote-bruk har en positiv effekt. I baseline-scenarioet håndteres 141 fly, hvor 130 parkeres ved gate og 11 sendes til remote. Gjennomsnittlig ventetid er 0,71 minutter. Når remote-strategien slås av, øker gjennomsnittlig ventetid til 1,21 minutter, samtidig som flere fly presses inn mot terminalgatene.
+Det første forskningsspørsmålet handler om i hvilken grad strategisk fjernparkering av mindre fly bidrar til å redusere gatekonflikter og ventetider i peak-perioder. Resultatene tyder på at strategisk remote-bruk har en positiv effekt. I baseline-scenarioet håndteres 141 fly, hvor 128 parkeres ved gate og 13 sendes til remote. Gjennomsnittlig ventetid er 0,35 minutter. Når remote-strategien slås av, øker gjennomsnittlig ventetid til 0,53 minutter, samtidig som flere fly presses inn mot terminalgatene.
 
 Dette indikerer at remote stands fungerer som en avlastningsmekanisme for terminalgatene. Effekten er ikke først og fremst at alle fly får kortere ventetid, men at systemet får større fleksibilitet til å prioritere store fly og fly med høyere behov for terminalnær parkering. Strategisk fjernparkering bør derfor forstås som et virkemiddel for robusthet, ikke bare som en løsning for enkelttilfeller med manglende gatekapasitet.
 
 ### 5.2 FS2: Kritisk grense for busssjåfører
-Det andre forskningsspørsmålet gjelder hvor grensen går for antall busssjåfører før ventetiden øker markant. Scenarioene viser at to sjåfører fremstår som et hensiktsmessig minimum i peak-perioden. Med én sjåfør øker gjennomsnittlig ventetid fra 0,71 til 0,92 minutter, og antall remote-operasjoner reduseres fra 11 til 8. Dette er ikke en dramatisk økning i gjennomsnittlig ventetid, men det viser at systemet mister noe av fleksibiliteten til å bruke remote stands aktivt.
+Det andre forskningsspørsmålet gjelder hvor grensen går for antall busssjåfører før ventetiden øker markant. Scenarioene viser at to sjåfører fremstår som et hensiktsmessig minimum i peak-perioden. Med én sjåfør øker gjennomsnittlig ventetid fra 0,35 til 0,43 minutter, og antall remote-operasjoner reduseres fra 13 til 11. Dette er ikke en dramatisk økning i gjennomsnittlig ventetid, men det viser at systemet mister noe av fleksibiliteten til å bruke remote stands aktivt.
 
 Scenarioet med null sjåfører viser tydeligere hvor viktig sjåførressursen er. Da øker gjennomsnittlig ventetid til 2,16 minutter, og maksimal ventetid blir 60 minutter. Dette viser at busssjåfører er en kritisk ressurs, ikke bare fordi de transporterer passasjerer, men fordi de gjør remote stands operativt tilgjengelige. Uten sjåfører eksisterer remote-kapasiteten i praksis bare som fysisk areal, ikke som en fullt brukbar kapasitetsressurs.
 
 Resultatene viser også at tre sjåfører ikke gir lavere gjennomsnittlig ventetid enn to sjåfører i baseline-lignende drift. Det tyder på at to sjåfører er nok i den analyserte situasjonen, mens tre sjåfører først kan bli relevant ved større forsinkelser, høyere trafikkvekst eller lengre busstider.
 
 ### 5.3 FS3: Effekt av trafikkvekst i peak-perioden
-Det tredje forskningsspørsmålet undersøker hvordan økt trafikk påvirker ventetid, remote-bruk og gateutnyttelse. I scenarioet med 20 % trafikkvekst i peak øker det totale antallet fly i simuleringen fra 141 til 146, altså fem ekstra flybevegelser. Gjennomsnittlig ventetid øker fra 0,71 til 0,79 minutter, og antall remote-operasjoner øker fra 11 til 12.
+Det tredje forskningsspørsmålet undersøker hvordan økt trafikk påvirker ventetid, remote-bruk og gateutnyttelse. I scenarioet med 20 % trafikkvekst i peak øker det totale antallet fly i simuleringen fra 141 til 146, altså fem ekstra flybevegelser. Gjennomsnittlig ventetid øker fra 0,35 til 0,41 minutter, og antall remote-operasjoner øker fra 13 til 15.
 
 Resultatene tyder på at dagens operasjonsmodell tåler moderat trafikkvekst, forutsatt at strategisk remote-bruk og to sjåfører opprettholdes. Samtidig bør prosentvis vekst tolkes sammen med faktisk antall ekstra fly. En økning på 20 % i peak-vinduet gir i denne simuleringen bare fem ekstra fly totalt i den analyserte dagen. Det betyr at scenarioet viser robusthet mot moderat økning, men ikke nødvendigvis mot en vesentlig endret trafikkstruktur eller flere samtidige store fly.
 

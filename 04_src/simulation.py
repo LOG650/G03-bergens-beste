@@ -7,6 +7,7 @@ from pathlib import Path
 BUSS_KAPASITET_DEFAULT = 80
 KJØRETID_DEFAULT = 6 
 DEFAULT_SEED = 42
+MAX_VENTETID_FØR_REMOTE_DEFAULT = 5
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "03_data"
 
@@ -110,8 +111,9 @@ def fly_prosess(env, fly_data, flyplass, smp, config):
             yield env.process(parker(env, fly_id, gate, sone, fly_data, flyplass, smp, ankomst_min, pax))
             return
         
-        # Hvis vi har ventet 15 min, prøv remote uansett flystørrelse (MEN KUN HVIS VI HAR SJÅFØRER)
-        if env.now - ankomst_min >= 15 and flyplass.sjåfører:
+        # Hvis vi har ventet lenge nok, prøv remote uansett flystørrelse (MEN KUN HVIS VI HAR SJÅFØRER)
+        max_ventetid = config.get('max_ventetid_før_remote', MAX_VENTETID_FØR_REMOTE_DEFAULT)
+        if env.now - ankomst_min >= max_ventetid and flyplass.sjåfører:
             remote = next((s for s, v in flyplass.remote_status.items() if v is None), None)
             if remote:
                 wait_time = env.now - ankomst_min
@@ -210,7 +212,8 @@ if __name__ == "__main__":
         'strategisk_remote': True,
         'trafikkvekst': 0,
         'stokastisk': False,
-        'seed': DEFAULT_SEED
+        'seed': DEFAULT_SEED,
+        'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE_DEFAULT
     }
     res = run_simulation(config)
     print(res)

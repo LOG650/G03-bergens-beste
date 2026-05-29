@@ -10,6 +10,8 @@ DATA_DIR = PROJECT_ROOT / "03_data"
 sys.path.append(str(SRC_DIR))
 from simulation import run_simulation
 
+MAX_VENTETID_FØR_REMOTE = 5
+
 def main():
     scenarios = []
     
@@ -22,7 +24,8 @@ def main():
         'strategisk_remote': True,
         'trafikkvekst': 0,
         'stokastisk': False,
-        'seed': 42
+        'seed': 42,
+        'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE
     })
     
     # 2. SJÅFØRKAPASITET
@@ -35,7 +38,8 @@ def main():
             'strategisk_remote': True,
             'trafikkvekst': 0,
             'stokastisk': False,
-            'seed': 42 + s
+            'seed': 42 + s,
+            'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE
         })
         
     # 3. REMOTE-STRATEGI AV
@@ -47,7 +51,8 @@ def main():
         'strategisk_remote': False,
         'trafikkvekst': 0,
         'stokastisk': False,
-        'seed': 42
+        'seed': 42,
+        'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE
     })
     
     # 4. TRAFIKKVEKST
@@ -60,7 +65,8 @@ def main():
             'strategisk_remote': True,
             'trafikkvekst': v,
             'stokastisk': False,
-            'seed': 100 + idx
+            'seed': 100 + idx,
+            'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE
         })
         
     # 5. STOKASTISK (Realistiske forsinkelser)
@@ -75,7 +81,8 @@ def main():
             'strategisk_remote': True,
             'trafikkvekst': 0,
             'stokastisk': True,
-            'seed': 200 + i
+            'seed': 200 + i,
+            'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE
         }
         stokastisk_results.append(run_simulation(config))
     
@@ -103,7 +110,8 @@ def main():
         'strategisk_remote': True,
         'trafikkvekst': 0,
         'stokastisk': False,
-        'seed': 42
+        'seed': 42,
+        'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE
     })
     for kapasitet in [60, 70, 90]:
         scenarios.append({
@@ -114,7 +122,8 @@ def main():
             'strategisk_remote': True,
             'trafikkvekst': 0,
             'stokastisk': False,
-            'seed': 42
+            'seed': 42,
+            'max_ventetid_før_remote': MAX_VENTETID_FØR_REMOTE
         })
 
     # KJØR SIMULERINGER
