@@ -1,24 +1,38 @@
 gantt
     title Prosjektfremdrift: Kapasitetsanalyse Flesland (LOG650)
     dateFormat  YYYY-MM-DD
+    axisFormat  %d.%m
+
     section Planlegging
-    Prosjektoppstart & Plan :active, p1, 2026-02-15, 2026-03-09
+    Prosjektoppstart og prosjektplan :done, p1, 2026-02-15, 2026-03-09
+    Avgrense problemstilling og scope :done, p1b, 2026-03-01, 2026-03-12
     Milepæl M1: Godkjent beskrivelse :milestone, m1, 2026-03-09, 0d
 
     section Datainnsamling
-    Innhenting av trafikkdata (Avinor) :p2, 2026-03-09, 2026-03-31
-    Strukturering av datagrunnlag :p3, 2026-03-20, 2026-04-05
-    Milepæl M2: Datagrunnlag etablert :milestone, m2, 2026-03-31, 0d
+    Innhenting av trafikkdata fra Avinor :done, p2, 2026-03-09, 2026-04-04
+    Avklare gate- og remote-regler :done, p2b, 2026-03-20, 2026-04-10
+    Strukturering og datavask :done, p3, 2026-04-03, 2026-04-18
+    Koble ankomst- og avgangsrotasjoner :done, p3b, 2026-04-10, 2026-04-24
+    Milepæl M2: Datagrunnlag etablert :milestone, m2, 2026-04-24, 0d
 
     section Utvikling
-    Konseptuell modellering :p4, 2026-04-01, 2026-04-30
-    Milepæl M3: Konseptuell modell ferdig :milestone, m3, 2026-04-30, 0d
-    Programmering (Python/SimPy) :p5, 2026-05-01, 2026-05-15
-    Milepæl M4: Simuleringsmodell ferdig :milestone, m4, 2026-05-15, 0d
+    Konseptuell simuleringsmodell :done, p4, 2026-04-12, 2026-04-30
+    Implementere gate- og soneallokering :done, p5, 2026-04-25, 2026-05-10
+    Implementere buss- og sjåførressurser :done, p6, 2026-05-05, 2026-05-15
+    Verifisering og feilsøking av modell :done, p7, 2026-05-12, 2026-05-22
+    Milepæl M3: Simuleringsmodell kjørbar :milestone, m3, 2026-05-22, 0d
 
-    section Analyse & Rapport
-    Baseline-analyse & Testing :p6, 2026-05-16, 2026-05-22
-    Scenarioanalyse :p7, 2026-05-20, 2026-05-26
-    Sluttføring av rapport :p8, 2026-05-20, 2026-05-31
-    Innlevering :crit, p9, 2026-06-01, 1d
+    section Analyse
+    Baseline-analyse og plausibilitetssjekk :done, a1, 2026-05-18, 2026-05-23
+    Scenarioanalyse og sensitiviteter :done, a2, 2026-05-22, 2026-05-29
+    Oppdatere resultater med 5 min venteterskel :active, a3, 2026-05-29, 2026-05-30
+    Milepæl M4: Resultater klare :milestone, m4, 2026-05-30, 0d
+
+    section Rapport og innlevering
+    Første rapportutkast :done, r1, 2026-04-25, 2026-05-18
+    Metode og modellbeskrivelse :done, r2, 2026-05-10, 2026-05-24
+    Resultatkapittel og diskusjon :done, r3, 2026-05-20, 2026-05-29
+    Språkvask, figurer og konsistenskontroll :active, r4, 2026-05-29, 2026-05-31
+    Sluttkontroll og eksport til Word/PDF :crit, r5, 2026-05-31, 1d
+    Innlevering :crit, r6, 2026-06-01, 1d
     Milepæl M5: Endelig innlevering :milestone, m5, 2026-06-01, 0d
