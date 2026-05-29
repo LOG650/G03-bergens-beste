@@ -1,14 +1,14 @@
 # Optimalisering av bakkestøtte-ressurser ved Bergen Lufthavn Flesland
 ## En kvantitativ simuleringsstudie av gate-utnyttelse og busstransport
 
-**Gruppe:** G03 - Bergens Beste  
-**Emne:** LOG650 - Bacheloroppgave i Logistikk  
-**Dato:** 30. april 2026
+**Gruppe:** G03 - Bergens Beste<br>
+**Emne:** LOG650 - Forskningsprosjekt i logistikk<br>
+**Dato:** 29. mai 2026
 
 ---
 
 ## Sammendrag
-Denne rapporten undersøker kapasitetsutnyttelsen av gater og behovet for busstransport ved Bergen Lufthavn Flesland gjennom diskret-hendelse simulering (DES) i Python med SimPy. Problemstillingen fokuserer på balansen mellom maksimal utnyttelse av terminalnære gater og effektiv bruk av fjernparkering (remote stands) i peak-perioder. Ved å analysere et planlagt flyprogram for en travel sommerdag i 2026, indikerer studien at dagens operasjonsmodell med aktiv gate-styring og to tilgjengelige busssjåfører i rushtiden er robust i den analyserte testdagen. Resultatene viser en gjennomsnittlig ventetid på under ett minutt i baseline-scenarioet. Scenarioanalyser viser samtidig at systemet blir mer sårbart ved bemanningsreduksjon til én sjåfør, fordi muligheten til å bruke remote stands aktivt reduseres. Videre indikerer simuleringen at lufthavnen kan håndtere moderat trafikkvekst i peak-perioden uten stor økning i gjennomsnittlig ventetid, forutsatt at dagens ressursallokering og strategiske gate-styring opprettholdes. Rapporten konkluderer med at strategisk bruk av fjernparkering for mindre flymaskiner er en viktig suksessfaktor for effektiv drift ved Flesland, men at resultatene bør tolkes som scenarioanalyse og ikke som en eksakt prediksjon av faktisk drift.
+Denne rapporten undersøker kapasitetsutnyttelsen av gater og behovet for busstransport ved Bergen Lufthavn Flesland gjennom diskret-hendelse simulering (DES) i Python med SimPy. Problemstillingen fokuserer på balansen mellom maksimal utnyttelse av terminalnære gater og effektiv bruk av fjernparkering (remote stands) i peak-perioder. Ved å analysere et planlagt flyprogram for en travel sommerdag i 2026, indikerer studien at et driftsoppsett med aktiv gate-styring og to tilgjengelige busssjåfører i rushtiden er robust i den analyserte testdagen. Resultatene viser en gjennomsnittlig ventetid på 0,35 minutter i baseline-scenarioet. Scenarioanalyser viser samtidig at systemet blir mer sårbart ved bemanningsreduksjon til én sjåfør, fordi muligheten til å bruke remote stands aktivt reduseres. Videre indikerer simuleringen at lufthavnen kan håndtere moderat trafikkvekst i peak-perioden uten stor økning i gjennomsnittlig ventetid, forutsatt at ressursnivået i baseline og strategisk gate-styring opprettholdes. Rapporten konkluderer med at strategisk bruk av fjernparkering for mindre flymaskiner er en viktig suksessfaktor for effektiv drift ved Flesland, men at resultatene bør tolkes som scenarioanalyse og ikke som en eksakt prediksjon av faktisk drift.
 
 ---
 
@@ -30,7 +30,7 @@ Problemstillingen konkretiseres ved å analysere hvor mange ankomster systemet k
 ### 1.3 Forskningsspørsmål
 Studien tar sikte på å besvare følgende spørsmål gjennom simulering:
 1. I hvilken grad bidrar dagens praksis med strategisk fjernparkering av mindre fly til å redusere gate-konflikter og ventetider i peak-perioder?
-2. Hva er den kritiske grensen for antall busssjåfører før ventetiden for passasjerer øker markant i rushtiden?
+2. Hva er den kritiske grensen for antall busssjåfører før ventetiden før gate eller remote stand øker markant i rushtiden?
 3. Hvordan påvirkes ventetid, remote-bruk og gateutnyttelse av økt trafikk i peak-perioden?
 4. Hvilke ressurser fremstår som de mest kritiske flaskehalsene: terminalgater, remote stands, busser eller busssjåfører?
 
@@ -83,7 +83,7 @@ Simulering som forskningsmetode gir oss et "digitalt laboratorium" hvor vi kan:
 
 1.  **Isolere variabler:** Vi kan endre nøyaktig én variabel (f.eks. antall busssjåfører) mens vi holder flyprogrammet og gatestrukturen helt konstant, noe som gjør det mulig å identifisere direkte årsakssammenhenger.
 2.  **Stress-teste systemet:** Vi kan simulere ekstreme scenarioer, som 20% trafikkvekst, for å identifisere "knekkpunkter" i infrastrukturen før de oppstår i virkeligheten.
-3.  **Dokumentere "As-Is" vs. "To-Be":** Ved først å verifisere en baseline-modell mot dagens drift, skapes et solid fundament for å evaluere effekten av fremtidige strategiske endringer.
+3.  **Dokumentere "As-Is" vs. "To-Be":** Ved først å etablere en baseline-modell for et realistisk driftsoppsett, skapes et solid fundament for å evaluere effekten av fremtidige strategiske endringer.
 
 ### 3.2 Datainnsamling og Datapreparering
 Datagrunnlaget for studien består av tre hovedkilder levert av Avinor (Avinor, 2025, 2026):
@@ -147,19 +147,19 @@ For å gjøre simuleringsmodellen etterprøvbar, beskrives den også som en fore
 *   $y_{ir}=1$ dersom fly $i$ tildeles remote stand $r$, ellers $0$
 *   $d_t$: antall busssjåfører tilgjengelig i periode $t$
 
-Hovedmålet er å håndtere flest mulig samtidige ankomster innenfor eksisterende infrastruktur, samtidig som ventetiden holdes under et definert terskelnivå. Dette kan uttrykkes som:
+Hovedmålet er å håndtere flest mulig samtidige ankomster innenfor eksisterende infrastruktur, samtidig som ventetiden før gate eller remote stand holdes innenfor et definert operativt terskelnivå. Dette kan uttrykkes som:
 
 $$
 \max A
 $$
 
-der $A$ er antall ankomster som kan håndteres i peak-perioden uten at ventetidskravet brytes. En sentral kapasitetsbegrensning er:
+der $A$ er antall ankomster som kan håndteres i peak-perioden uten at ventetidskravet brytes. Siden modellen bruker en terskel for enkeltfly før remote forsøkes, er maksimal ventetid og andel fly over terskel mer relevante enn gjennomsnittet alene. En sentral kapasitetsbegrensning er derfor:
 
 $$
-\bar{W}_q \leq W_{max}
+W_{q,max} \leq W_{max}
 $$
 
-der $\bar{W}_q$ er gjennomsnittlig ventetid før gate eller remote stand. Gjennomsnittlig ventetid beregnes som:
+der $W_{q,max}$ er maksimal ventetid før gate eller remote stand. Gjennomsnittlig ventetid rapporteres fortsatt som et supplerende mål og beregnes som:
 
 $$
 \bar{W}_q = \frac{1}{n}\sum_{i=1}^{n} W_{q,i}
@@ -217,7 +217,7 @@ Full kvantitativ validering mot historiske observasjoner har ikke vært mulig in
 Denne valideringsformen betyr at resultatene bør tolkes som et beslutningsstøttende analysegrunnlag, ikke som en eksakt prediksjon av faktiske ventetider. Modellen er best egnet til å sammenligne scenarioer og identifisere relative forskjeller mellom ressursoppsett, for eksempel forskjellen mellom én og to busssjåfører eller effekten av strategisk remote-bruk.
 
 ### 3.6 Gjennomførte og anbefalte scenarioer
-For å styrke analysens etterprøvbarhet er scenarioene strukturert som kontrollerte eksperimenter der én sentral parameter endres om gangen. Noen av scenarioene er gjennomført i denne rapporten, mens andre beskrives som anbefalte tilleggstester dersom modellen videreutvikles.
+For å styrke analysens etterprøvbarhet er scenarioene strukturert som kontrollerte eksperimenter der én sentral parameter endres om gangen. De viktigste scenarioene er gjennomført i denne rapporten, mens videre analyser beskrives som mulige utvidelser dersom modellen videreutvikles.
 
 | Test | Parameter som endres | Status | Formål |
 |---|---|---|---|
@@ -256,7 +256,7 @@ Dominansen av innenlandstrafikk stiller store krav til gatene i den rene innland
 Det høye antallet små fly (over 57%) bekrefter potensialet for den strategiske fjernparkeringen i rushtiden, da disse flyene utgjør en betydelig volummasse som ellers ville blokkert gate-kapasitet for de større maskinene. De fleste av disse små maskinene er Widerøe- og mindre SAS-flyvninger som er godt egnet for busstransport.
 
 ### 4.2 Simuleringsresultater (Baseline)
-Simuleringen ble kjørt med data for en representativ travel dag (17. juni 2026). Baseline-scenarioet reflekterer dagens drift med 2 tilgjengelige busssjåfører og strategisk bruk av remote-parkering for små fly i rushtiden.
+Simuleringen ble kjørt med data for en representativ travel dag (17. juni 2026). Baseline-scenarioet representerer et driftsoppsett med 2 tilgjengelige busssjåfører og strategisk bruk av remote-parkering for små fly i rushtiden.
 
 **Resultater fra simuleringen:**
 *   **Totalt antall fly håndtert:** 141
@@ -328,9 +328,9 @@ Suksessfaktorene for å håndtere denne veksten er:
 2.  **Fleksibilitet i gate-oppsettet:** Utnyttelsen av flex-gater gjør det mulig å absorbere svingninger i trafikksammensetningen (D/I/S).
 3.  **Tilstrekkelig busskapasitet:** To sjåfører er nok til å håndtere de ekstra remote-operasjonene uten at busskøer blir den begrensende faktoren.
 
-Konklusjonen fra dette scenariet er at lufthavnen har kapasitet til moderat vekst med dagens operasjonsmodell, men at dette forutsetter at man opprettholder både personellressursene og den aktive styringen av parkeringsvalg. En ytterligere vekst utover 20 % vil sannsynligvis kreve enten fysiske utvidelser av terminalen eller mer radikale endringer i turnaround-prosesser.
+Konklusjonen fra dette scenariet er at lufthavnen har kapasitet til moderat vekst med det analyserte driftsoppsettet, men at dette forutsetter at man opprettholder både personellressursene og den aktive styringen av parkeringsvalg. Siden +30 %-scenarioet også håndteres med lav ventetid i denne modellen, peker resultatene ikke på et tydelig kapasitetsbrudd innenfor de testede vekstnivåene. Videre analyser bør derfor undersøke flere analysedager, mer krevende forsinkelsesmønstre og samtidige store fly før det trekkes konklusjoner om behov for fysisk utvidelse.
 
-### 4.4 Robusthet, følsomhet og anbefalte tilleggstester
+### 4.4 Robusthet, følsomhet og videre analyser
 Hovedresultatene i simuleringsmodellen baserer seg på et fastlagt flyprogram, mens stokastiske forsinkelser bare er testet som en begrenset tilleggskjøring. Dette gir god kontroll over årsakssammenhenger, men begrenser den statistiske generaliserbarheten. Funnene bør derfor tolkes som en analyse av strukturell kapasitet, ikke som en full sannsynlighetsanalyse av alle mulige driftsdager.
 
 **1. Representativitet gjennom stress-testing**
@@ -348,16 +348,16 @@ $$
 
 der $I(W_{q,i} > W_{max})$ er lik 1 dersom fly $i$ venter mer enn terskelverdien, og 0 ellers. Dette målet er særlig relevant for operativ planlegging, fordi få ekstreme ventetider kan være viktigere enn et lavt gjennomsnitt.
 
-**4. Foreslåtte tilleggstester**
-For å styrke rapporten ytterligere bør modellen kjøres med følgende tilleggsscenarioer dersom tid og data tillater det:
+**4. Videre analyser**
+Flere av de opprinnelig foreslåtte scenarioene er nå gjennomført, blant annet variasjon i sjåførkapasitet, remote-strategi, trafikkvekst, busstid og busskapasitet. For å styrke forskningsprosjektet ytterligere bør videre arbeid derfor fokusere på mål og tester som ikke er fullt dekket i dagens modell:
 
-| Tilleggstest | Forventet faglig bidrag |
+| Videre analyse | Forventet faglig bidrag |
 |---|---|
-| 0, 1, 2 og 3 busssjåfører | Identifiserer minimumsnivå og eventuell nytte av ekstra bemanning |
-| Remote-strategi av/på | Viser om strategisk fjernparkering faktisk reduserer gatekonflikter |
-| +10 %, +20 % og +30 % trafikkvekst | Identifiserer knekkpunktet for systemet |
-| Tilfeldige ankomstforsinkelser | Tester om konklusjonene holder under mer realistisk drift |
-| Økt busstid eller lavere busskapasitet | Tester hvor følsom modellen er for transportforutsetninger |
+| Flere analysedager | Tester om funnene fra 17. juni er representative for andre travle dager |
+| Flere stokastiske replikasjoner | Gir grunnlag for konfidensintervall, variasjon og mer robust usikkerhetsanalyse |
+| 95-persentil og andel fly over terskel | Viser om lave gjennomsnitt skjuler krevende enkelthendelser |
+| Separat måling av buss- og sjåførkø | Skiller ventetid før parkering fra eventuell ventetid på busstransport |
+| Scenarioer med flere samtidige store fly | Tester om robustheten holder når gatebehovet blir mer krevende |
 
 Disse testene vil gjøre det mulig å skille mellom tre ulike typer konklusjoner: hva systemet håndterer under ideelle forhold, hva systemet håndterer under realistisk variasjon, og hvilke ressurser som først blir kritiske når belastningen øker.
 
@@ -372,12 +372,12 @@ Det andre forskningsspørsmålet gjelder hvor grensen går for antall busssjåf�
 
 Scenarioet med null sjåfører viser tydeligere hvor viktig sjåførressursen er. Da øker gjennomsnittlig ventetid til 2,16 minutter, og maksimal ventetid blir 60 minutter. Dette viser at busssjåfører er en kritisk ressurs, ikke bare fordi de transporterer passasjerer, men fordi de gjør remote stands operativt tilgjengelige. Uten sjåfører eksisterer remote-kapasiteten i praksis bare som fysisk areal, ikke som en fullt brukbar kapasitetsressurs.
 
-Resultatene viser også at tre sjåfører ikke gir lavere gjennomsnittlig ventetid enn to sjåfører i baseline-lignende drift. Det tyder på at to sjåfører er nok i den analyserte situasjonen, mens tre sjåfører først kan bli relevant ved større forsinkelser, høyere trafikkvekst eller lengre busstider.
+Resultatene viser også at tre sjåfører ikke gir lavere gjennomsnittlig ventetid enn to sjåfører i baseline-lignende drift. Samtidig øker antall remote-operasjoner fra 13 til 16, noe som viser at ekstra sjåførkapasitet først og fremst gir mer operativ fleksibilitet, ikke nødvendigvis lavere gjennomsnittlig ventetid i den analyserte dagen. Det tyder på at to sjåfører er nok i den analyserte situasjonen, mens tre sjåfører først kan bli relevant ved større forsinkelser, høyere trafikkvekst eller lengre busstider.
 
 ### 5.3 FS3: Effekt av trafikkvekst i peak-perioden
 Det tredje forskningsspørsmålet undersøker hvordan økt trafikk påvirker ventetid, remote-bruk og gateutnyttelse. I scenarioet med 20 % trafikkvekst i peak øker det totale antallet fly i simuleringen fra 141 til 146, altså fem ekstra flybevegelser. Gjennomsnittlig ventetid øker fra 0,35 til 0,41 minutter, og antall remote-operasjoner øker fra 13 til 15.
 
-Resultatene tyder på at dagens operasjonsmodell tåler moderat trafikkvekst, forutsatt at strategisk remote-bruk og to sjåfører opprettholdes. Samtidig bør prosentvis vekst tolkes sammen med faktisk antall ekstra fly. En økning på 20 % i peak-vinduet gir i denne simuleringen bare fem ekstra fly totalt i den analyserte dagen. Det betyr at scenarioet viser robusthet mot moderat økning, men ikke nødvendigvis mot en vesentlig endret trafikkstruktur eller flere samtidige store fly.
+Resultatene tyder på at det analyserte driftsoppsettet tåler moderat trafikkvekst, forutsatt at strategisk remote-bruk og to sjåfører opprettholdes. Samtidig bør prosentvis vekst tolkes sammen med faktisk antall ekstra fly. En økning på 20 % i peak-vinduet gir i denne simuleringen bare fem ekstra fly totalt i den analyserte dagen. Det betyr at scenarioet viser robusthet mot moderat økning, men ikke nødvendigvis mot en vesentlig endret trafikkstruktur eller flere samtidige store fly.
 
 ### 5.4 FS4: Kritiske flaskehalser
 Det fjerde forskningsspørsmålet handler om hvilke ressurser som fremstår som mest kritiske: terminalgater, remote stands, busser eller busssjåfører. Resultatene peker ikke på én enkelt fysisk ressurs som alene bestemmer kapasiteten. Flaskehalsen oppstår snarere i samspillet mellom gatekapasitet og busssjåførkapasitet.
@@ -387,7 +387,7 @@ Terminalgatene er sentrale fordi store fly og visse trafikktyper har sterkere be
 Dette betyr at kapasitetsplanleggingen ikke bør begrenses til å telle antall gater eller antall remote stands. Den bør også inkludere hvordan ressursene virker sammen over tid. En lufthavn kan ha tilstrekkelig fysisk kapasitet, men likevel få kø dersom personellressurser eller transportressurser ikke er tilgjengelige på riktig tidspunkt.
 
 ### 5.5 Samlet vurdering og praktiske implikasjoner
-Samlet viser analysen at dagens operasjonsmodell ved Bergen lufthavn Flesland er robust i den analyserte testdagen, men at robustheten er avhengig av aktiv styring. Lave gjennomsnittsverdier for ventetid kan skjule sårbarhet i enkelthendelser. For en lufthavn kan én alvorlig gatekonflikt i peak-perioden være mer operativt krevende enn mange små ventetider fordelt utover dagen. Derfor bør maksimal ventetid, 95-persentil og andel fly over terskelverdi brukes sammen med gjennomsnittlig ventetid når resultatene tolkes.
+Samlet viser analysen at det analyserte driftsoppsettet ved Bergen lufthavn Flesland er robust i den analyserte testdagen, men at robustheten er avhengig av aktiv styring. Lave gjennomsnittsverdier for ventetid kan skjule sårbarhet i enkelthendelser. For en lufthavn kan én alvorlig gatekonflikt i peak-perioden være mer operativt krevende enn mange små ventetider fordelt utover dagen. Derfor bør maksimal ventetid, 95-persentil og andel fly over terskelverdi brukes sammen med gjennomsnittlig ventetid når resultatene tolkes.
 
 Basert på funnene trekkes tre praktiske anbefalinger:
 
@@ -408,7 +408,7 @@ Studien gir følgende svar på forskningsspørsmålene:
 *   **FS3 – Trafikkvekst:** Systemet ser ut til å kunne håndtere moderat trafikkvekst i peak-perioden, blant annet en økning på 20 % i det analyserte peak-vinduet. Dette forutsetter at dagens ressursnivå og strategiske remote-bruk opprettholdes.
 *   **FS4 – Flaskehalser:** Den viktigste flaskehalsen er ikke én enkelt ressurs, men samspillet mellom terminalgater, remote stands og busssjåførkapasitet. Busssjåfører fungerer som en koblingsressurs som avgjør om remote stands faktisk kan brukes som avlastning for terminalgatene.
 
-Hovedkonklusjonen er at dagens operasjonsmodell virker robust for den analyserte testdagen, men at robustheten er avhengig av aktiv gate-styring og tilstrekkelig sjåførkapasitet. Modellen viser at fysisk infrastruktur alene ikke bestemmer kapasiteten. Operativ kapasitet oppstår gjennom samspillet mellom infrastruktur, transportressurser, bemanning og prioriteringsregler.
+Hovedkonklusjonen er at det analyserte driftsoppsettet virker robust for den analyserte testdagen, men at robustheten er avhengig av aktiv gate-styring og tilstrekkelig sjåførkapasitet. Modellen viser at fysisk infrastruktur alene ikke bestemmer kapasiteten. Operativ kapasitet oppstår gjennom samspillet mellom infrastruktur, transportressurser, bemanning og prioriteringsregler.
 
 ### 6.2 Studiens bidrag
 Studiens praktiske bidrag er at den gir et beslutningsstøttende analysegrunnlag for planlegging av gatebruk, remote stands og busssjåførkapasitet ved Bergen lufthavn Flesland. Resultatene kan brukes til å vurdere hvilke ressursnivåer som bør opprettholdes i peak-perioder, og hvilke scenarioer som bør undersøkes nærmere før operative endringer innføres.
